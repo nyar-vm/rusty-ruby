@@ -9,8 +9,17 @@ repository = "https://github.com/nyar-vm/rusty-ruby"
 keywords = ["ruby", "runtime", "language"]
 categories = ["development-tools"]
 
+
+
 [dependencies]
 oak-core = { workspace = true }
 oak-vfs = { workspace = true }
 oak-ruby = { workspace = true }
 ruby-types = { workspace = true }
+ruby-ir = { workspace = true }
+libloading = { workspace = true }
+cranelift = { workspace = true }
+cranelift-codegen = { workspace = true }
+cranelift-frontend = { workspace = true }
+cranelift-module = { workspace = true }
+cranelift-jit = { workspace = true }

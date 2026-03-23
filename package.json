@@ -5,9 +5,15 @@
         "check": "cargo cry",
         "regenerate": "$env:REGENERATE_TESTS=1; cargo test --release --all-features",
         "test": "cargo test --release",
-        "fmt": "cargo fmt --all",
+        "fmt": "npx @biomejs/biome format --write . && cargo fmt",
         "p": "cargo workspace publish --resume",
-        "u": "cargo upgrade --incompatible"
+        "u": "cargo upgrade --pinned",
+        "build:home": "pnpm --filter @nyar/ruby-homepage build",
+        "dev:home": "pnpm --filter @nyar/ruby-homepage dev"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.8.0",
+        "tsx": "^4.21.0"
     },
     "packageManager": "pnpm@10.18.3"
 }

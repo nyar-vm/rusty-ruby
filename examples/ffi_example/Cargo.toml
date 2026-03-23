@@ -1,0 +1,10 @@
+[package]
+name = "ffi_example"
+version.workspace = true
+description = "Example demonstrating how to use the Rusty Ruby FFI interface"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ruby = { workspace = true }

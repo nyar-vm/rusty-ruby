@@ -1,28 +1,48 @@
-//! IRB (Interactive Ruby) 工具
-//! 提供交互式 Ruby 解释器功能
+//! IRB (Interactive Ruby) tool
+//! Provides interactive Ruby interpreter functionality
 
+use clap::Parser;
 use ruby_tools::RustyRubyFrontend;
 use std::io::{self, BufRead, Write};
 
-/// 显示版本信息
-fn print_version() {
-    println!("irb 1.11.0 (2024-12-25)");
+/// IRB command-line tool
+#[derive(Parser, Debug)]
+#[command(name = "irb", version = "1.11.0", about = "Interactive Ruby shell")]
+pub struct IrbArgs {
+    /// Script file to execute
+    #[arg(index = 1)]
+    script: Option<String>,
+
+    /// Script arguments
+    #[arg(last = true)]
+    args: Vec<String>,
+
+    /// Suppress read of ~/.irbrc
+    #[arg(short = 'f')]
+    suppress_irbrc: bool,
+
+    /// Bc mode (load mathn, fraction or matrix)
+    #[arg(short = 'm')]
+    bc_mode: bool,
+
+    /// Set $DEBUG to true (same as `ruby -d')
+    #[arg(short = 'd')]
+    debug: bool,
+
+    /// Require the library before executing script
+    #[arg(short = 'r', value_name = "library")]
+    require_library: Option<String>,
+
+    /// Specify $LOAD_PATH directory (may be used multiple times)
+    #[arg(short = 'I', value_name = "path")]
+    load_path: Option<String>,
+
+    /// Set default encoding to UTF-8
+    #[arg(short = 'U')]
+    utf8: bool,
 }
 
-/// 显示帮助信息
-fn print_help() {
-    println!("Usage: irb [switches] [programfile] [arguments]");
-    println!("  -f                    Suppress read of ~/.irbrc");
-    println!("  -m                    Bc mode (load mathn, fraction or matrix)");
-    println!("  -d                    Set $DEBUG to true (same as `ruby -d')");
-    println!("  -r library            Require the library, before executing your script");
-    println!("  -I path               Specify $LOAD_PATH directory (may be used multiple times)");
-    println!("  -U                    Set default encoding to UTF-8");
-    println!("  --version             Print the version of irb");
-    println!("  --help                Print this help");
-}
-
-/// 启动交互式会话
+/// Start interactive session
 fn start_interactive_session() {
     println!("irb 1.11.0 (2024-12-25) -- Interactive Ruby");
     println!("Type 'exit' or 'quit' to exit.");
@@ -69,31 +89,39 @@ fn start_interactive_session() {
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let args = IrbArgs::parse();
 
-    // 处理命令行参数
-    for arg in &args[1..] {
-        match arg.as_str() {
-            "--version" => {
-                print_version();
-                return;
-            }
-            "--help" => {
-                print_help();
-                return;
-            }
-            _ if arg.starts_with('-') => {
-                // 处理其他参数
-                println!("Warning: Option {} not yet implemented", arg);
-            }
-            _ => {
-                // 执行脚本文件
-                println!("Error: irb does not support script files");
-                return;
-            }
-        }
+    // Handle script file
+    if let Some(_script) = args.script {
+        println!("Error: irb does not support script files");
+        return;
     }
 
-    // 启动交互式会话
+    // Handle other parameters
+    if args.suppress_irbrc {
+        println!("Suppress ~/.irbrc option not yet implemented");
+    }
+
+    if args.bc_mode {
+        println!("Bc mode not yet implemented");
+    }
+
+    if args.debug {
+        println!("Debug mode not yet implemented");
+    }
+
+    if args.require_library.is_some() {
+        println!("Require library option not yet implemented");
+    }
+
+    if args.load_path.is_some() {
+        println!("Load path option not yet implemented");
+    }
+
+    if args.utf8 {
+        println!("UTF-8 encoding option not yet implemented");
+    }
+
+    // Start interactive session
     start_interactive_session();
 }

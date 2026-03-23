@@ -1,67 +1,69 @@
-# RBQ TypeScript Frontend
+# Ruby-TS
 
-RBQ TypeScript 前端包，负责接受 WASM 并导出功能。
+TypeScript frontend for Rusty Ruby, providing WASM integration and TypeScript bindings for Ruby code execution.
 
-## 功能特性
+## 🎯 Project Overview
 
-- **WASM 集成**：接受并集成 RBQ WASM 模块
-- **TypeScript 封装**：为 WASM 功能提供 TypeScript 封装
-- **功能导出**：将 RBQ 核心功能导出为 TypeScript API
-- **类型安全**：提供完整的 TypeScript 类型定义
+Ruby-TS is a TypeScript package that integrates with Rusty Ruby's WebAssembly module, allowing Ruby code to run in browser environments with type-safe TypeScript bindings.
 
-## 安装
+## 🌟 Key Features
 
-```bash
-# 使用 npm
-npm install rbq-ts
+- **WASM Integration**: Seamlessly loads and integrates Rusty Ruby WASM module
+- **TypeScript Wrapper**: Provides type-safe TypeScript bindings for Ruby functionality
+- **API Export**: Exposes Rusty Ruby core features as a clean TypeScript API
+- **Type Safety**: Complete TypeScript type definitions for enhanced development experience
 
-# 使用 yarn
-yarn add rbq-ts
-
-# 使用 pnpm
-pnpm add rbq-ts
-```
-
-## 使用示例
+## 🚀 Quick Start
 
 ```typescript
 import { RBQ } from 'rbq-ts';
 
 async function main() {
-  // 初始化 RBQ
+  // Initialize RBQ
   const rbq = await RBQ.init();
   
-  // 使用 RBQ 功能
-  // ...
+  // Execute Ruby code
+  const result = await rbq.evaluate('1 + 2 * 3');
+  console.log('Result:', result);
+  
+  // Define and use Ruby classes
+  await rbq.evaluate(`
+    class Person
+      def initialize(name)
+        @name = name
+      end
+      
+      def greet
+        "Hello, #{@name}!"
+      end
+    end
+  `);
+  
+  const person = await rbq.evaluate('Person.new("World")');
+  const greeting = await rbq.evaluate('person.greet');
+  console.log('Greeting:', greeting);
 }
 
 main().catch(console.error);
 ```
 
-## 架构
+## 🏗️ Architecture
 
-- **WASM 加载**：负责加载和初始化 RBQ WASM 模块
-- **API 封装**：为 WASM 功能提供 TypeScript API
-- **类型定义**：提供完整的 TypeScript 类型支持
+- **WASM Loader**: Responsible for loading and initializing the Rusty Ruby WASM module
+- **API Wrapper**: Provides a clean TypeScript API around the WASM functionality
+- **Type Definitions**: Complete TypeScript types for all exposed Ruby features
+- **Error Handling**: Comprehensive error handling for Ruby execution
 
-## 依赖
-
-- 无外部依赖
-
-## 开发
+## 🛠️ Development
 
 ```bash
-# 构建
+# Build the project
 pnpm build
 
-# 开发模式
+# Development mode
 pnpm dev
 ```
 
-## 许可证
+## 🤝 Contributing
 
-MIT 或 Apache-2.0
-
-## 贡献
-
-欢迎提交 issue 和 PR 来改进这个项目！
+Contributions are welcome! Feel free to open issues or submit pull requests to help improve Ruby-TS.

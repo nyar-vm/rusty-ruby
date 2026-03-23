@@ -4,8 +4,10 @@
 
 #![warn(missing_docs)]
 
+use serde::{Deserialize, Serialize};
+
 /// Ruby value type
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RubyValue {
     /// Nil value
     Nil,
@@ -25,6 +27,8 @@ pub enum RubyValue {
     Hash(std::collections::HashMap<String, RubyValue>),
     /// Object value
     Object(String, std::collections::HashMap<String, RubyValue>),
+    /// Closure value
+    Closure(usize), // 使用 usize 作为闭包的唯一标识符
 }
 
 impl RubyValue {
@@ -90,10 +94,137 @@ impl RubyValue {
             _ => format!("{:?}", self),
         }
     }
+
+    /// Mark this value and all referenced values
+    pub fn mark(&self, marked: &mut std::collections::HashSet<*const RubyValue>) {
+        let ptr = self as *const RubyValue;
+        if marked.contains(&ptr) {
+            return;
+        }
+        marked.insert(ptr);
+
+        match self {
+            RubyValue::Array(values) => {
+                for value in values {
+                    value.mark(marked);
+                }
+            }
+            RubyValue::Hash(map) => {
+                for (_, value) in map {
+                    value.mark(marked);
+                }
+            }
+            RubyValue::Object(_, fields) => {
+                for (_, value) in fields {
+                    value.mark(marked);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Concatenate two Ruby values
+    pub fn concat(&self, other: &RubyValue) -> RubyValue {
+        match (self, other) {
+            (RubyValue::String(s1), RubyValue::String(s2)) => RubyValue::String(format!("{}{}", s1, s2)),
+            (RubyValue::Array(arr1), RubyValue::Array(arr2)) => {
+                let mut result = arr1.clone();
+                result.extend(arr2.clone());
+                RubyValue::Array(result)
+            }
+            _ => RubyValue::String(format!("{}{}", self.to_string(), other.to_string())),
+        }
+    }
+
+    /// Get array length
+    pub fn array_length(&self) -> Option<usize> {
+        match self {
+            RubyValue::Array(arr) => Some(arr.len()),
+            _ => None,
+        }
+    }
+
+    /// Get array element at index
+    pub fn array_get(&self, index: usize) -> Option<RubyValue> {
+        match self {
+            RubyValue::Array(arr) => arr.get(index).cloned(),
+            _ => None,
+        }
+    }
+
+    /// Set array element at index
+    pub fn array_set(&mut self, index: usize, value: RubyValue) -> Option<()> {
+        match self {
+            RubyValue::Array(arr) => {
+                if index < arr.len() {
+                    arr[index] = value;
+                    Some(())
+                }
+                else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Get hash value for key
+    pub fn hash_get(&self, key: &str) -> Option<RubyValue> {
+        match self {
+            RubyValue::Hash(map) => map.get(key).cloned(),
+            _ => None,
+        }
+    }
+
+    /// Set hash value for key
+    pub fn hash_set(&mut self, key: &str, value: RubyValue) -> Option<()> {
+        match self {
+            RubyValue::Hash(map) => {
+                map.insert(key.to_string(), value);
+                Some(())
+            }
+            _ => None,
+        }
+    }
+
+    /// Get hash keys
+    pub fn hash_keys(&self) -> Option<Vec<String>> {
+        match self {
+            RubyValue::Hash(map) => Some(map.keys().cloned().collect()),
+            _ => None,
+        }
+    }
+
+    /// Get hash values
+    pub fn hash_values(&self) -> Option<Vec<RubyValue>> {
+        match self {
+            RubyValue::Hash(map) => Some(map.values().cloned().collect()),
+            _ => None,
+        }
+    }
+
+    /// Get object field
+    pub fn object_get(&self, field: &str) -> Option<RubyValue> {
+        match self {
+            RubyValue::Object(_, fields) => fields.get(field).cloned(),
+            _ => None,
+        }
+    }
+
+    /// Set object field
+    pub fn object_set(&mut self, field: &str, value: RubyValue) -> Option<()> {
+        match self {
+            RubyValue::Object(_, fields) => {
+                fields.insert(field.to_string(), value);
+                Some(())
+            }
+            _ => None,
+        }
+    }
 }
 
 /// Ruby error type
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RubyError {
     /// Method not found error
     MethodNotFound(String),

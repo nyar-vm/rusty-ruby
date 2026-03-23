@@ -1,12 +1,12 @@
-# 🛠️ Rusty Ruby Tools
+# Rusty Ruby Tools
 
 A **pure Rust** collection of Ruby language tools built for the Rusty Ruby ecosystem.
 
-## Overview
+## 🎯 Project Overview
 
-`ruby-tools` is a comprehensive set of Ruby language tools built entirely in Rust. These tools provide a familiar Ruby development experience while leveraging Rust's safety and performance benefits.
+Ruby-Tools is a comprehensive set of Ruby language tools built entirely in Rust. These tools provide a familiar Ruby development experience while leveraging Rust's safety and performance benefits.
 
-## ✨ Features
+## 🌟 Key Features
 
 - **Pure Rust Implementation**: 🦀 Built entirely in Rust for maximum safety and performance
 - **Ruby Command**: 📝 Execute Ruby scripts with the `ruby` command
@@ -16,9 +16,7 @@ A **pure Rust** collection of Ruby language tools built for the Rusty Ruby ecosy
 - **Documentation Tools**: 📚 `rdoc` and `ri` for generating and viewing documentation
 - **Test Runner**: 🧪 `testrb` for running Ruby tests
 
-## 🚀 Getting Started
-
-### Using Ruby Tools
+## 🚀 Quick Start
 
 ```bash
 # Execute a Ruby script
@@ -37,15 +35,99 @@ rdoc
 testrb test_file.rb
 ```
 
-## 📦 Dependencies
+## 🏗️ Architecture
 
-- **oak-core**: Rust-based parsing framework
-- **oak-ruby**: Ruby language frontend
+### Tools Overview
 
-## 📄 License
+- **ruby**: Main Ruby interpreter and script executor
+- **irb**: Interactive Ruby shell for experimentation and debugging
+- **gem**: Package manager for Ruby libraries and applications
+- **rake**: Task runner for automating development tasks
+- **rdoc**: Documentation generator for Ruby code
+- **ri**: Documentation viewer for Ruby APIs
+- **testrb**: Test runner for Ruby test suites
 
-Licensed under MIT OR Apache-2.0.
+## 🛠️ Development
 
-## 🌟 Contributing
+```bash
+# Build the project
+cargo build
 
-Contributions are welcome! Feel free to open issues or submit pull requests to help improve this project.
+# Run tests
+cargo test
+
+# Build in release mode
+cargo build --release
+```
+
+## 📚 Usage Examples
+
+### Ruby Command
+
+```bash
+# Execute a Ruby script
+ruby hello.rb
+
+# Run with verbose output
+ruby -v hello.rb
+
+# Execute inline Ruby code
+ruby -e "puts 'Hello, World!'"
+```
+
+### Interactive Ruby (IRB)
+
+```bash
+# Start IRB
+irb
+
+# Start IRB with verbose output
+irb -v
+
+# Execute a Ruby file and enter IRB
+irb -r hello.rb
+```
+
+### Rake Task Runner
+
+```bash
+# List available tasks
+rake -T
+
+# Run a specific task
+rake build
+
+# Run tasks with verbose output
+rake -v test
+```
+
+### Documentation Tools
+
+```bash
+# Generate documentation for a project
+rdoc
+
+# Generate documentation with options
+rdoc --main README.md --title "My Project"
+
+# View documentation for a class or method
+ri String
+ri String#length
+```
+
+### Test Runner
+
+```bash
+# Run a test file
+testrb test_file.rb
+
+# Run tests with verbose output
+testrb -v test_file.rb
+
+# Run tests in a directory
+testrb test/
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests to help improve Ruby-Tools.

@@ -1,14 +1,219 @@
-//! Gem 包管理器工具
-//! 提供 Ruby 包的安装、卸载、列出等功能
+//! Gem package manager tool
+//! Provides Ruby package installation, uninstallation, listing, etc.
 
-use std::env;
+use clap::{Parser, Subcommand};
 
-/// 显示版本信息
-fn print_version() {
-    println!("gem 3.5.11 (2024-12-25)");
+/// Gem package manager
+#[derive(Parser, Debug)]
+#[command(name = "gem", version = "3.5.11", about = "RubyGems package manager")]
+pub struct GemArgs {
+    #[command(subcommand)]
+    command: GemCommand,
 }
 
-/// 显示帮助信息
+/// Gem commands
+#[derive(Subcommand, Debug)]
+pub enum GemCommand {
+    /// Build a gem from a gemspec
+    Build {
+        /// gemspec file path
+        #[arg(index = 1)]
+        gemspec: Option<String>,
+    },
+    /// Manage RubyGems certificates and signing settings
+    Cert {
+        /// Subcommand
+        #[arg(index = 1)]
+        subcommand: Option<String>,
+    },
+    /// Remove old versions of gems from the local repository
+    Cleanup {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Display the contents of the installed gems
+    Contents {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Show the dependencies of an installed gem
+    Dependency {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Display information about the RubyGems environment
+    Environment,
+    /// Download a gem and place it in the current directory
+    Fetch {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Generates the index files for a gem server directory
+    GenerateIndex {
+        /// Directory path
+        #[arg(index = 1)]
+        directory: Option<String>,
+    },
+    /// Display help information about RubyGems
+    Help {
+        /// Command name
+        #[arg(index = 1)]
+        command: Option<String>,
+    },
+    /// Install a gem into the local repository
+    Install {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+        /// Version requirement
+        #[arg(short = 'v', long = "version")]
+        version: Option<String>,
+    },
+    /// Display gems whose name starts with STRING
+    List {
+        /// Search pattern
+        #[arg(index = 1)]
+        pattern: Option<String>,
+    },
+    /// Mirror all gems from a remote gem server to the local one
+    Mirror,
+    /// Display all gems that need updates
+    Outdated,
+    /// Manage gem owners on RubyGems.org
+    Owner {
+        /// Subcommand
+        #[arg(index = 1)]
+        subcommand: Option<String>,
+    },
+    /// Restores installed gems to their original condition
+    Pristine {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Push a gem to RubyGems.org
+    Push {
+        /// Gem file path
+        #[arg(index = 1)]
+        gem_file: Option<String>,
+    },
+    /// Query gem information from the local repository
+    Query {
+        /// Search pattern
+        #[arg(index = 1)]
+        pattern: Option<String>,
+    },
+    /// Generates RDoc for pre-installed gems
+    Rdoc {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Display all gems that match STRING
+    Search {
+        /// Search pattern
+        #[arg(index = 1)]
+        pattern: Option<String>,
+    },
+    /// Documentation and gem repository HTTP server
+    Server {
+        /// Port number
+        #[arg(short = 'p', long = "port")]
+        port: Option<u16>,
+    },
+    /// Manage the sources and cache file RubyGems uses to search for gems
+    Sources {
+        /// Subcommand
+        #[arg(index = 1)]
+        subcommand: Option<String>,
+    },
+    /// Display gem specification (in yaml)
+    Specification {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Uninstall a gem from the local repository
+    Uninstall {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+        /// Version requirement
+        #[arg(short = 'v', long = "version")]
+        version: Option<String>,
+    },
+    /// Update installed gems to the latest version
+    Update {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+    },
+    /// Find the location of a library file you can require
+    Which {
+        /// Library name
+        #[arg(index = 1)]
+        library: Option<String>,
+    },
+    /// Remove a specific version of a gem from RubyGems.org
+    Yank {
+        /// Gem name
+        #[arg(index = 1)]
+        gem: Option<String>,
+        /// Version number
+        #[arg(short = 'v', long = "version")]
+        version: Option<String>,
+    },
+}
+
+/// Install gem
+fn install_gem(gem: Option<&String>) {
+    if let Some(gem_name) = gem {
+        println!("Fetching: {}-0.1.0.gem (100%)", gem_name);
+        println!("Successfully installed {}-0.1.0", gem_name);
+        println!("1 gem installed");
+    }
+    else {
+        println!("Error: Missing gem name");
+    }
+}
+
+/// Uninstall gem
+fn uninstall_gem(gem: Option<&String>) {
+    if let Some(gem_name) = gem {
+        println!("Successfully uninstalled {}-0.1.0", gem_name);
+    }
+    else {
+        println!("Error: Missing gem name");
+    }
+}
+
+/// List gems
+fn list_gems(_pattern: Option<&String>) {
+    println!("*** LOCAL GEMS ***");
+    println!("");
+    println!("nyar-vm (0.1.0)");
+    println!("rusty-ruby (0.1.0)");
+    println!("");
+    println!("Gems included by default: bigdecimal, bundler, cmath, csv, date, dbm, etc.");
+}
+
+/// Update gem
+fn update_gem(gem: Option<&String>) {
+    if let Some(gem_name) = gem {
+        println!("Updating {}", gem_name);
+        println!("Nothing to update");
+    }
+    else {
+        println!("Updating installed gems");
+        println!("Nothing to update");
+    }
+}
+
+/// Print help information
 fn print_help() {
     println!("Usage: gem COMMAND [ARGS]");
     println!("");
@@ -45,84 +250,17 @@ fn print_help() {
     println!("  Example: gem help install");
 }
 
-/// 安装 gem
-fn install_gem(args: &[String]) {
-    if args.is_empty() {
-        println!("Error: Missing gem name");
-        return;
-    }
-    let gem_name = &args[0];
-    println!("Fetching: {}-0.1.0.gem (100%)", gem_name);
-    println!("Successfully installed {}-0.1.0", gem_name);
-    println!("1 gem installed");
-}
-
-/// 卸载 gem
-fn uninstall_gem(args: &[String]) {
-    if args.is_empty() {
-        println!("Error: Missing gem name");
-        return;
-    }
-    let gem_name = &args[0];
-    println!("Successfully uninstalled {}-0.1.0", gem_name);
-}
-
-/// 列出 gems
-fn list_gems(_args: &[String]) {
-    println!("*** LOCAL GEMS ***");
-    println!("");
-    println!("nyar-vm (0.1.0)");
-    println!("rusty-ruby (0.1.0)");
-    println!("");
-    println!("Gems included by default: bigdecimal, bundler, cmath, csv, date, dbm, etc.");
-}
-
-/// 更新 gem
-fn update_gem(args: &[String]) {
-    if args.is_empty() {
-        println!("Updating installed gems");
-        println!("Nothing to update");
-    }
-    else {
-        let gem_name = &args[0];
-        println!("Updating {}", gem_name);
-        println!("Nothing to update");
-    }
-}
-
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args = GemArgs::parse();
 
-    // 处理全局参数
-    for arg in &args[1..] {
-        match arg.as_str() {
-            "--version" => {
-                print_version();
-                return;
-            }
-            "--help" => {
-                print_help();
-                return;
-            }
-            _ => break,
-        }
-    }
-
-    if args.len() < 2 {
-        print_help();
-        return;
-    }
-
-    let command = &args[1];
-    match command.as_str() {
-        "install" => install_gem(&args[2..]),
-        "uninstall" => uninstall_gem(&args[2..]),
-        "list" => list_gems(&args[2..]),
-        "update" => update_gem(&args[2..]),
-        "help" => print_help(),
+    match args.command {
+        GemCommand::Install { gem, .. } => install_gem(gem.as_ref()),
+        GemCommand::Uninstall { gem, .. } => uninstall_gem(gem.as_ref()),
+        GemCommand::List { pattern } => list_gems(pattern.as_ref()),
+        GemCommand::Update { gem } => update_gem(gem.as_ref()),
+        GemCommand::Help { .. } => print_help(),
         _ => {
-            println!("Unknown command: {}", command);
-            print_help();
+            println!("Command not yet implemented");
         }
     }
 }

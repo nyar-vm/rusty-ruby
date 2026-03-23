@@ -5,56 +5,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { marked } from 'marked'
-import { getHighlighter } from 'shiki'
+import { ref, computed, onMounted, watch } from "vue";
+import { marked } from "marked";
+import { createHighlighter } from "shiki";
 
 interface Props {
-  content: string
+    content: string;
 }
 
-const props = defineProps<Props>()
-const contentRef = ref<HTMLElement | null>(null)
-let highlighter: any = null
+const props = defineProps<Props>();
+const contentRef = ref<HTMLElement | null>(null);
+let highlighter: any = null;
 
 onMounted(async () => {
-  highlighter = await getHighlighter({
-    theme: 'nord',
-    langs: ['rust', 'typescript', 'javascript', 'json', 'bash']
-  })
-  highlightCodeBlocks()
-})
+    highlighter = await createHighlighter({
+        themes: ["one-dark-pro"],
+        langs: ["rust", "typescript", "javascript", "json", "bash", "ruby"],
+    });
+    highlightCodeBlocks();
+});
 
-watch(() => props.content, () => {
-  setTimeout(highlightCodeBlocks, 0)
-})
+watch(
+    () => props.content,
+    () => {
+        setTimeout(highlightCodeBlocks, 0);
+    },
+);
 
 const highlightCodeBlocks = async () => {
-  if (!highlighter || !contentRef.value) return
-  
-  const codeBlocks = contentRef.value.querySelectorAll('pre code')
-  for (const codeBlock of codeBlocks) {
-    const code = codeBlock.textContent || ''
-    const lang = codeBlock.className.replace('language-', '')
-    
-    try {
-      const highlighted = await highlighter.codeToHtml(code, {
-        lang: lang || 'text'
-      })
-      const pre = codeBlock.parentElement
-      if (pre) {
-        pre.innerHTML = highlighted
-      }
-    } catch (error) {
-      console.error('Code highlighting error:', error)
+    if (!highlighter || !contentRef.value) return;
+
+    const codeBlocks = contentRef.value.querySelectorAll("pre code");
+    for (const codeBlock of codeBlocks) {
+        const code = codeBlock.textContent || "";
+        const lang = codeBlock.className.replace("language-", "");
+
+        try {
+            const highlighted = highlighter.codeToHtml(code, {
+                lang: lang || "text",
+                theme: "one-dark-pro",
+            });
+            const pre = codeBlock.parentElement;
+            if (pre) {
+                pre.innerHTML = highlighted;
+            }
+        } catch (error) {
+            console.error("Code highlighting error:", error);
+        }
     }
-  }
-}
+};
 
 const renderedContent = computed(() => {
-  const content = props.content.replace(/^---\n[\s\S]*?\n---/, '')
-  return marked.parse(content) as string
-})
+    const content = props.content.replace(/^---\n[\s\S]*?\n---/, "");
+    return marked.parse(content) as string;
+});
 </script>
 
 <style scoped>
@@ -67,7 +71,7 @@ const renderedContent = computed(() => {
 }
 
 .markdown-viewer :deep(h2) {
-  @apply text-2xl font-semibold mb-4 mt-6 text-white border-b-2 border-emerald-500/20 pb-2;
+  @apply text-2xl font-semibold mb-4 mt-6 text-white border-b-2 border-red-500/20 pb-2;
 }
 
 .markdown-viewer :deep(h3) {
@@ -88,7 +92,7 @@ const renderedContent = computed(() => {
 }
 
 .markdown-viewer :deep(code:not(pre code)) {
-  @apply bg-emerald-900/50 px-1.5 py-0.5 rounded text-sm font-mono text-emerald-400;
+  @apply bg-red-900/50 px-1.5 py-0.5 rounded text-sm font-mono text-red-400;
 }
 
 .markdown-viewer :deep(pre) {
@@ -100,11 +104,11 @@ const renderedContent = computed(() => {
 }
 
 .markdown-viewer :deep(a) {
-  @apply text-emerald-400 hover:text-emerald-300 underline;
+  @apply text-red-400 hover:text-red-300 underline;
 }
 
 .markdown-viewer :deep(blockquote) {
-  @apply border-l-4 border-emerald-500 pl-4 italic text-slate-400 mb-4 bg-emerald-500/5 py-2;
+  @apply border-l-4 border-red-500 pl-4 italic text-slate-400 mb-4 bg-red-500/5 py-2;
 }
 
 .markdown-viewer :deep(table) {
@@ -113,11 +117,11 @@ const renderedContent = computed(() => {
 
 .markdown-viewer :deep(th),
 .markdown-viewer :deep(td) {
-  @apply border border-emerald-800/50 px-4 py-2;
+  @apply border border-red-800/50 px-4 py-2;
 }
 
 .markdown-viewer :deep(th) {
-  @apply bg-emerald-900/30 font-semibold text-white;
+  @apply bg-red-900/30 font-semibold text-white;
 }
 </style>
 
@@ -130,8 +134,8 @@ const renderedContent = computed(() => {
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #282c34;
+  border: 1px solid rgba(204, 52, 45, 0.2);
 }
 
 .shiki code {

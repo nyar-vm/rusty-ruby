@@ -1,0 +1,24 @@
+[package]
+name = "ruby-lsp"
+version.workspace = true
+description = "Ruby Language Server Protocol implementation for Rusty Ruby"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository = "https://github.com/nyar-vm/rusty-ruby"
+keywords = ["ruby", "lsp", "language-server"]
+categories = ["development-tools"]
+
+[[bin]]
+name = "ruby-lsp"
+path = "bin/main.rs"
+
+[dependencies]
+oak-core = { workspace = true }
+oak-lsp = { workspace = true }
+oak-ruby = { workspace = true }
+oak-vfs = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

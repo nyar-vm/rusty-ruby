@@ -1,0 +1,10 @@
+[package]
+name = "test_compiler"
+version.workspace = true
+description = "Example demonstrating the Rusty Ruby compiler functionality"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ruby = { workspace = true }

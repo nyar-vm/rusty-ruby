@@ -1,21 +1,15 @@
 [workspace]
 resolver = "3"
 members = [
-    "compilers/ruby",
-    "compilers/ruby-macros",
-    "compilers/ruby-tools",
-    "compilers/ruby-types",
+    "compilers/*",
 ]
 default-members = [
-    "compilers/ruby",
-    "compilers/ruby-macros",
-    "compilers/ruby-tools",
-    "compilers/ruby-types",
+    "compilers/*",
 ]
 
 
 [workspace.package]
-version = "0.0.0"
+version = "0.0.1"
 edition = "2024"
 authors = ["RBQ Team"]
 license = "MIT OR Apache-2.0"
@@ -23,7 +17,7 @@ repository = "https://github.com/nyar-vm/rusty-ruby"
 
 [workspace.dependencies]
 async-stream = "0.3"
-tokio = { version = "1.36", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util"] }
+tokio = { version = "1.36", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util", "io-std"] }
 async-trait = { version = "0.1" }
 serde = { version = "1.0.227", features = ["derive"] }
 serde_json = "1.0"
@@ -41,20 +35,32 @@ chrono = { version = "0.4", features = ["serde"] }
 dashmap = "6.1.0"
 bytes = "1.5"
 byteorder = "1.5"
+libloading = "0.8.1"
+cranelift = "0.103.0"
+cranelift-codegen = "0.103.0"
+cranelift-frontend = "0.103.0"
+cranelift-module = "0.103.0"
+cranelift-jit = "0.103.0"
 
 # Oak parsers
-oak-lsp = { path = "../oaks/projects/oak-lsp", version = "0.0.9" }
-oak-core = { path = "../oaks/projects/oak-core", version = "0.0.9" }
-oak-vfs = { path = "../oaks/projects/oak-vfs", version = "0.0.9" }
-oak-mcp = { path = "../oaks/projects/oak-mcp", version = "0.0.9" }
-oak-json = { path = "../oaks/examples/oak-json", version = "0.0.9" }
-oak-toml = { path = "../oaks/examples/oak-toml", version = "0.0.9" }
-oak-ruby = { path = "../oaks/examples/oak-ruby", version = "0.0.9" }
+oak-lsp = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-core = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-vfs = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-mcp = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-json = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-toml = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
+oak-ruby = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
 
 # Rusty Ruby crates
-ruby-types = { path = "compilers/ruby-types" }
+ruby-types = { path = "compilers/ruby-types" , version = "0.0.1" }
+ruby-ir = { path = "compilers/ruby-ir" , version = "0.0.1" }
+ruby = { path = "compilers/ruby" , version = "0.0.1" }
 
 # Macro dependencies
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
+
+# WASM dependencies
+wasm-bindgen = "0.2.92"
+wasm-bindgen-futures = "0.4.42"

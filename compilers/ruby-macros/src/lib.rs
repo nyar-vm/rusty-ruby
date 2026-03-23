@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 
 //! Procedural macros for the Rusty Ruby ecosystem
-//! 
+//!
 //! This crate provides various procedural macros to simplify development
 //! within the Rusty Ruby ecosystem.
 

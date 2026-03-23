@@ -1,6 +1,6 @@
 //! Test for the RubyClass derive macro
 
-use ruby::Ruby;
+use ruby::{Ruby, ToRubyValue};
 use ruby_macros::RubyClass;
 
 /// A test struct to derive RubyClass for

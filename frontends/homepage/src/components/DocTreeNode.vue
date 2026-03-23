@@ -27,28 +27,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { DocNode } from '@/docs'
+import { ref } from "vue";
+import type { DocNode } from "@/docs";
 
 interface Props {
-  node: DocNode
-  currentPath: string
+    node: DocNode;
+    currentPath: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-  select: [node: DocNode]
-}>()
+    select: [node: DocNode];
+}>();
 
-const isExpanded = ref(true)
+const isExpanded = ref(true);
 
 function toggle() {
-  isExpanded.value = !isExpanded.value
+    isExpanded.value = !isExpanded.value;
 }
 
 function handleSelect() {
-  if (!props.node.isDirectory) {
-    emit('select', props.node)
-  }
+    if (!props.node.isDirectory) {
+        emit("select", props.node);
+    }
 }
 </script>
