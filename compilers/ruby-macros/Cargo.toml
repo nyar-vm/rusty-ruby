@@ -1,0 +1,22 @@
+[package]
+name = "ruby-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Procedural macros for the Rusty Ruby ecosystem"
+repository = "https://github.com/nyar-vm/rusty-ruby"
+keywords = ["ruby", "macros", "proc-macro"]
+categories = ["development-tools"]
+
+[lib]
+proc-macro = true
+path = "src/lib.rs"
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+
+[dev-dependencies]
+ruby = { path = "../ruby" }

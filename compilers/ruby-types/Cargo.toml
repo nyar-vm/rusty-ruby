@@ -1,0 +1,13 @@
+[package]
+name = "ruby-types"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "📦 Ruby value and error types for Rusty Ruby"
+repository = "https://github.com/nyar-vm/rusty-ruby"
+keywords = ["ruby", "types", "runtime"]
+categories = ["development-tools"]
+
+[lib]
+path = "src/lib.rs"

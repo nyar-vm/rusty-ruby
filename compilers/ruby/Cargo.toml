@@ -1,0 +1,16 @@
+[package]
+name = "ruby"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Pure Rust implementation of Ruby runtime environment"
+repository = "https://github.com/nyar-vm/rusty-ruby"
+keywords = ["ruby", "runtime", "language"]
+categories = ["development-tools"]
+
+[dependencies]
+oak-core = { workspace = true }
+oak-vfs = { workspace = true }
+oak-ruby = { workspace = true }
+ruby-types = { workspace = true }

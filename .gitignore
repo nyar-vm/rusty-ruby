@@ -1,14 +1,23 @@
 # OS
 .DS_Store/
 thumbs.db
-time-travel.*
 
 # IDE
 .vscode/
-.vs/
 .idea/
-*.iml
+.trae/
+.vs/
 
 # Rust
 target/
 Cargo.lock
+.cargo/config.toml
+
+# Node
+node_modules/
+cache/
+dist/
+
+# Logs
+*.txt
+*.log

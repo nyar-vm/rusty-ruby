@@ -1,13 +1,60 @@
 [workspace]
-members = ["projects/*"]
-default-members = [
-    "projects/terrain-core",
-    "projects/terrain-ds",
+resolver = "3"
+members = [
+    "compilers/ruby",
+    "compilers/ruby-macros",
+    "compilers/ruby-tools",
+    "compilers/ruby-types",
 ]
-exclude = [
-    "projects/.DS_Store",
+default-members = [
+    "compilers/ruby",
+    "compilers/ruby-macros",
+    "compilers/ruby-tools",
+    "compilers/ruby-types",
 ]
 
-[profile.release]
-lto = true
-panic = "abort"
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+authors = ["RBQ Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/nyar-vm/rusty-ruby"
+
+[workspace.dependencies]
+async-stream = "0.3"
+tokio = { version = "1.36", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util"] }
+async-trait = { version = "0.1" }
+serde = { version = "1.0.227", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+futures = "0.3"
+itertools = "0.14.0"
+clap = { version = "4.5", features = ["derive"] }
+dotenvy = "0.15"
+# 为 TUI 生成美观表格
+comfy-table = "7.1"
+# toml = "0.9.11+spec-1.1.0" # replaced by oak-toml
+# toml_edit = "0.24.0+spec-1.1.0" # replaced by oak-toml
+uuid = { version = "1.7", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dashmap = "6.1.0"
+bytes = "1.5"
+byteorder = "1.5"
+
+# Oak parsers
+oak-lsp = { path = "../oaks/projects/oak-lsp", version = "0.0.9" }
+oak-core = { path = "../oaks/projects/oak-core", version = "0.0.9" }
+oak-vfs = { path = "../oaks/projects/oak-vfs", version = "0.0.9" }
+oak-mcp = { path = "../oaks/projects/oak-mcp", version = "0.0.9" }
+oak-json = { path = "../oaks/examples/oak-json", version = "0.0.9" }
+oak-toml = { path = "../oaks/examples/oak-toml", version = "0.0.9" }
+oak-ruby = { path = "../oaks/examples/oak-ruby", version = "0.0.9" }
+
+# Rusty Ruby crates
+ruby-types = { path = "compilers/ruby-types" }
+
+# Macro dependencies
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"

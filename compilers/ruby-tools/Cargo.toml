@@ -1,0 +1,47 @@
+[package]
+name = "ruby-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Pure Rust collection of Ruby language tools for the Rusty Ruby ecosystem"
+repository = "https://github.com/nyar-vm/rusty-ruby"
+keywords = ["ruby", "language", "tools"]
+categories = ["development-tools"]
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "ruby"
+path = "bin/ruby.rs"
+
+[[bin]]
+name = "irb"
+path = "bin/irb.rs"
+
+[[bin]]
+name = "gem"
+path = "bin/gem.rs"
+
+[[bin]]
+name = "rake"
+path = "bin/rake.rs"
+
+[[bin]]
+name = "rdoc"
+path = "bin/rdoc.rs"
+
+[[bin]]
+name = "ri"
+path = "bin/ri.rs"
+
+[[bin]]
+name = "testrb"
+path = "bin/testrb.rs"
+
+[dependencies]
+oak-core = { workspace = true }
+oak-ruby = { workspace = true }
+ruby-types.workspace = true
+
