@@ -156,8 +156,8 @@ impl RubyValue {
     pub fn array_set(&mut self, index: usize, value: RubyValue) -> Option<()> {
         match self {
             RubyValue::Array(arr) => {
-                if index < arr.len() {
-                    arr[index] = value;
+                if let Some(element) = arr.get_mut(index) {
+                    *element = value;
                     Some(())
                 }
                 else {
@@ -221,6 +221,259 @@ impl RubyValue {
             _ => None,
         }
     }
+
+    // Array operations
+
+    /// Push element to array
+    pub fn push(&mut self, value: RubyValue) -> Option<usize> {
+        match self {
+            RubyValue::Array(arr) => {
+                arr.push(value);
+                Some(arr.len())
+            }
+            _ => None,
+        }
+    }
+
+    /// Pop element from array
+    pub fn pop(&mut self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Array(arr) => arr.pop(),
+            _ => None,
+        }
+    }
+
+    /// Shift element from array
+    pub fn shift(&mut self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Array(arr) => {
+                if arr.is_empty() {
+                    None
+                }
+                else {
+                    Some(arr.remove(0))
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Unshift element to array
+    pub fn unshift(&mut self, value: RubyValue) -> Option<usize> {
+        match self {
+            RubyValue::Array(arr) => {
+                arr.insert(0, value);
+                Some(arr.len())
+            }
+            _ => None,
+        }
+    }
+
+    /// Delete element at index
+    pub fn delete_at(&mut self, index: usize) -> Option<RubyValue> {
+        match self {
+            RubyValue::Array(arr) => {
+                if index < arr.len() {
+                    Some(arr.remove(index))
+                }
+                else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Insert element at index
+    pub fn insert(&mut self, index: usize, value: RubyValue) -> Option<usize> {
+        match self {
+            RubyValue::Array(arr) => {
+                if index <= arr.len() {
+                    arr.insert(index, value);
+                    Some(arr.len())
+                }
+                else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    // Hash operations
+
+    /// Delete key from hash
+    pub fn delete(&mut self, key: &str) -> Option<RubyValue> {
+        match self {
+            RubyValue::Hash(map) => map.remove(key),
+            _ => None,
+        }
+    }
+
+    /// Clear hash
+    pub fn clear(&mut self) -> Option<()> {
+        match self {
+            RubyValue::Hash(map) => {
+                map.clear();
+                Some(())
+            }
+            _ => None,
+        }
+    }
+
+    /// Merge hash with another hash
+    pub fn merge(&mut self, other: &RubyValue) -> Option<()> {
+        match (self, other) {
+            (RubyValue::Hash(map1), RubyValue::Hash(map2)) => {
+                for (key, value) in map2 {
+                    map1.insert(key.clone(), value.clone());
+                }
+                Some(())
+            }
+            _ => None,
+        }
+    }
+
+    /// Select key-value pairs based on predicate
+    pub fn select(&self, predicate: impl Fn(&str, &RubyValue) -> bool) -> Option<RubyValue> {
+        match self {
+            RubyValue::Hash(map) => {
+                let mut result = std::collections::HashMap::new();
+                for (key, value) in map {
+                    if predicate(key, value) {
+                        result.insert(key.clone(), value.clone());
+                    }
+                }
+                Some(RubyValue::Hash(result))
+            }
+            _ => None,
+        }
+    }
+
+    /// Reject key-value pairs based on predicate
+    pub fn reject(&self, predicate: impl Fn(&str, &RubyValue) -> bool) -> Option<RubyValue> {
+        match self {
+            RubyValue::Hash(map) => {
+                let mut result = std::collections::HashMap::new();
+                for (key, value) in map {
+                    if !predicate(key, value) {
+                        result.insert(key.clone(), value.clone());
+                    }
+                }
+                Some(RubyValue::Hash(result))
+            }
+            _ => None,
+        }
+    }
+
+    // String operations
+
+    /// Get string length
+    pub fn length(&self) -> Option<usize> {
+        match self {
+            RubyValue::String(s) => Some(s.len()),
+            _ => None,
+        }
+    }
+
+    /// Slice string
+    pub fn slice(&self, start: usize, end: Option<usize>) -> Option<RubyValue> {
+        match self {
+            RubyValue::String(s) => {
+                let end_idx = end.unwrap_or(s.len());
+                if start <= end_idx && end_idx <= s.len() { Some(RubyValue::String(s[start..end_idx].to_string())) } else { None }
+            }
+            _ => None,
+        }
+    }
+
+    /// Split string
+    pub fn split(&self, separator: &str) -> Option<RubyValue> {
+        match self {
+            RubyValue::String(s) => {
+                let parts: Vec<RubyValue> = s.split(separator).map(|part| RubyValue::String(part.to_string())).collect();
+                Some(RubyValue::Array(parts))
+            }
+            _ => None,
+        }
+    }
+
+    /// Convert string to uppercase
+    pub fn upcase(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::String(s) => Some(RubyValue::String(s.to_uppercase())),
+            _ => None,
+        }
+    }
+
+    /// Convert string to lowercase
+    pub fn downcase(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::String(s) => Some(RubyValue::String(s.to_lowercase())),
+            _ => None,
+        }
+    }
+
+    // Numeric operations
+
+    /// Get absolute value
+    pub fn abs(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Integer(i) => Some(RubyValue::Integer(i.abs())),
+            RubyValue::Float(f) => Some(RubyValue::Float(f.abs())),
+            _ => None,
+        }
+    }
+
+    /// Round numeric value
+    pub fn round(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Integer(i) => Some(RubyValue::Integer(*i)),
+            RubyValue::Float(f) => Some(RubyValue::Float(f.round())),
+            _ => None,
+        }
+    }
+
+    /// Floor numeric value
+    pub fn floor(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Integer(i) => Some(RubyValue::Integer(*i)),
+            RubyValue::Float(f) => Some(RubyValue::Float(f.floor())),
+            _ => None,
+        }
+    }
+
+    /// Ceil numeric value
+    pub fn ceil(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Integer(i) => Some(RubyValue::Integer(*i)),
+            RubyValue::Float(f) => Some(RubyValue::Float(f.ceil())),
+            _ => None,
+        }
+    }
+
+    /// Square root of numeric value
+    pub fn sqrt(&self) -> Option<RubyValue> {
+        match self {
+            RubyValue::Integer(i) => {
+                if *i >= 0 {
+                    Some(RubyValue::Float((*i as f64).sqrt()))
+                }
+                else {
+                    None
+                }
+            }
+            RubyValue::Float(f) => {
+                if *f >= 0.0 {
+                    Some(RubyValue::Float(f.sqrt()))
+                }
+                else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
 }
 
 /// Ruby error type
@@ -260,3 +513,137 @@ impl std::error::Error for RubyError {}
 
 /// Ruby result type
 pub type RubyResult<T> = std::result::Result<T, RubyError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_array_operations() {
+        // Test push
+        let mut arr = RubyValue::Array(vec![RubyValue::Integer(1), RubyValue::Integer(2)]);
+        assert_eq!(arr.push(RubyValue::Integer(3)), Some(3));
+        assert_eq!(arr.array_length(), Some(3));
+
+        // Test pop
+        assert_eq!(arr.pop(), Some(RubyValue::Integer(3)));
+        assert_eq!(arr.array_length(), Some(2));
+
+        // Test shift
+        assert_eq!(arr.shift(), Some(RubyValue::Integer(1)));
+        assert_eq!(arr.array_length(), Some(1));
+
+        // Test unshift
+        assert_eq!(arr.unshift(RubyValue::Integer(0)), Some(2));
+        assert_eq!(arr.array_length(), Some(2));
+
+        // Test delete_at
+        assert_eq!(arr.delete_at(1), Some(RubyValue::Integer(2)));
+        assert_eq!(arr.array_length(), Some(1));
+
+        // Test insert
+        assert_eq!(arr.insert(1, RubyValue::Integer(1)), Some(2));
+        assert_eq!(arr.array_length(), Some(2));
+    }
+
+    #[test]
+    fn test_hash_operations() {
+        // Test delete
+        let mut hash = RubyValue::Hash(std::collections::HashMap::from([
+            ("a".to_string(), RubyValue::Integer(1)),
+            ("b".to_string(), RubyValue::Integer(2)),
+        ]));
+        assert_eq!(hash.delete("a"), Some(RubyValue::Integer(1)));
+        assert_eq!(hash.hash_get("a"), None);
+
+        // Test clear
+        assert_eq!(hash.clear(), Some(()));
+        assert_eq!(hash.hash_keys(), Some(vec![]));
+
+        // Test merge
+        let mut hash1 = RubyValue::Hash(std::collections::HashMap::from([("a".to_string(), RubyValue::Integer(1))]));
+        let hash2 = RubyValue::Hash(std::collections::HashMap::from([("b".to_string(), RubyValue::Integer(2))]));
+        assert_eq!(hash1.merge(&hash2), Some(()));
+        assert_eq!(hash1.hash_get("b"), Some(RubyValue::Integer(2)));
+
+        // Test select
+        let hash = RubyValue::Hash(std::collections::HashMap::from([
+            ("a".to_string(), RubyValue::Integer(1)),
+            ("b".to_string(), RubyValue::Integer(2)),
+            ("c".to_string(), RubyValue::Integer(3)),
+        ]));
+        let result = hash.select(|_, v| v.to_i32() > 1);
+        if let Some(RubyValue::Hash(map)) = result {
+            assert_eq!(map.len(), 2);
+            assert_eq!(map.get("b"), Some(&RubyValue::Integer(2)));
+            assert_eq!(map.get("c"), Some(&RubyValue::Integer(3)));
+        }
+        else {
+            panic!("select should return a hash");
+        }
+
+        // Test reject
+        let result = hash.reject(|_, v| v.to_i32() > 1);
+        if let Some(RubyValue::Hash(map)) = result {
+            assert_eq!(map.len(), 1);
+            assert_eq!(map.get("a"), Some(&RubyValue::Integer(1)));
+        }
+        else {
+            panic!("reject should return a hash");
+        }
+    }
+
+    #[test]
+    fn test_string_operations() {
+        let s = RubyValue::String("Hello World".to_string());
+
+        // Test length
+        assert_eq!(s.length(), Some(11));
+
+        // Test slice
+        assert_eq!(s.slice(0, Some(5)), Some(RubyValue::String("Hello".to_string())));
+        assert_eq!(s.slice(6, None), Some(RubyValue::String("World".to_string())));
+
+        // Test split
+        let result = s.split(" ");
+        if let Some(RubyValue::Array(arr)) = result {
+            assert_eq!(arr.len(), 2);
+            assert_eq!(arr[0], RubyValue::String("Hello".to_string()));
+            assert_eq!(arr[1], RubyValue::String("World".to_string()));
+        }
+        else {
+            panic!("split should return an array");
+        }
+
+        // Test upcase
+        assert_eq!(s.upcase(), Some(RubyValue::String("HELLO WORLD".to_string())));
+
+        // Test downcase
+        assert_eq!(s.downcase(), Some(RubyValue::String("hello world".to_string())));
+    }
+
+    #[test]
+    fn test_numeric_operations() {
+        // Test abs
+        let neg_int = RubyValue::Integer(-5);
+        assert_eq!(neg_int.abs(), Some(RubyValue::Integer(5)));
+        let neg_float = RubyValue::Float(-3.14);
+        assert_eq!(neg_float.abs(), Some(RubyValue::Float(3.14)));
+
+        // Test round
+        let float = RubyValue::Float(3.6);
+        assert_eq!(float.round(), Some(RubyValue::Float(4.0)));
+
+        // Test floor
+        assert_eq!(float.floor(), Some(RubyValue::Float(3.0)));
+
+        // Test ceil
+        assert_eq!(float.ceil(), Some(RubyValue::Float(4.0)));
+
+        // Test sqrt
+        let int = RubyValue::Integer(4);
+        assert_eq!(int.sqrt(), Some(RubyValue::Float(2.0)));
+        let float = RubyValue::Float(9.0);
+        assert_eq!(float.sqrt(), Some(RubyValue::Float(3.0)));
+    }
+}

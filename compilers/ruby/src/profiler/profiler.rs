@@ -1,10 +1,9 @@
 //! 性能分析器
-//! 
+//!
 //! 用于收集和分析代码执行的性能数据，包括执行时间、调用次数等。
 
 use crate::vm::{Context, Instruction};
-use std::collections::HashMap;
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 /// 性能分析事件
 #[derive(Debug, Clone)]
@@ -33,7 +32,7 @@ pub struct ProfileData {
 }
 
 /// 性能分析器
-/// 
+///
 /// 用于收集和分析代码执行的性能数据。
 pub struct Profiler {
     /// 性能分析数据

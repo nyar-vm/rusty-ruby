@@ -373,6 +373,244 @@ impl DeadCodeEliminator {
     }
 }
 
+/// Inline optimizer
+pub struct InlineOptimizer;
+
+impl Mutator for InlineOptimizer {
+    fn mutate_expression(&mut self, expr: &mut Expression) {
+        // First mutate sub-expressions
+        match expr {
+            Expression::MethodCall { receiver, method, arguments } => {
+                self.mutate_expression(receiver);
+                for arg in arguments {
+                    self.mutate_expression(arg);
+                }
+
+                // TODO: Implement method inlining based on method size and call frequency
+            }
+            Expression::BinaryOp { left, op, right } => {
+                self.mutate_expression(left);
+                self.mutate_expression(right);
+            }
+            Expression::UnaryOp { op, operand } => {
+                self.mutate_expression(operand);
+            }
+            Expression::ArrayLiteral(elements) => {
+                for elem in elements {
+                    self.mutate_expression(elem);
+                }
+            }
+            Expression::HashLiteral(pairs) => {
+                for (_, value) in pairs {
+                    self.mutate_expression(value);
+                }
+            }
+            Expression::Block { parameters, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Expression::SuperCall { arguments } => {
+                for arg in arguments {
+                    self.mutate_expression(arg);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn mutate_statement(&mut self, stmt: &mut Statement) {
+        // First mutate sub-expressions
+        match stmt {
+            Statement::Expression(expr) => {
+                self.mutate_expression(expr);
+            }
+            Statement::Assignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::GlobalAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::InstanceAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::ClassAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::If { condition, then_branch, else_branch } => {
+                self.mutate_expression(condition);
+                for stmt in then_branch {
+                    self.mutate_statement(stmt);
+                }
+                for stmt in else_branch {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::While { condition, body } => {
+                self.mutate_expression(condition);
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::For { variable, iterator, body } => {
+                self.mutate_expression(iterator);
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::Return(expr) => {
+                if let Some(expr) = expr {
+                    self.mutate_expression(expr);
+                }
+            }
+            Statement::MethodDefinition { name, parameters, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::ClassDefinition { name, superclass, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::ModuleDefinition { name, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::Require(expr) => {
+                self.mutate_expression(expr);
+            }
+            Statement::Load(expr) => {
+                self.mutate_expression(expr);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Loop optimizer
+pub struct LoopOptimizer;
+
+impl Mutator for LoopOptimizer {
+    fn mutate_statement(&mut self, stmt: &mut Statement) {
+        // First mutate sub-expressions
+        match stmt {
+            Statement::While { condition, body } => {
+                self.mutate_expression(condition);
+
+                // Try to optimize loops
+                // TODO: Implement loop unrolling and loop invariant code motion
+
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::For { variable, iterator, body } => {
+                self.mutate_expression(iterator);
+
+                // Try to optimize for loops
+                // TODO: Implement loop unrolling for for loops
+
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::Expression(expr) => {
+                self.mutate_expression(expr);
+            }
+            Statement::Assignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::GlobalAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::InstanceAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::ClassAssignment { name, value } => {
+                self.mutate_expression(value);
+            }
+            Statement::If { condition, then_branch, else_branch } => {
+                self.mutate_expression(condition);
+                for stmt in then_branch {
+                    self.mutate_statement(stmt);
+                }
+                for stmt in else_branch {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::Return(expr) => {
+                if let Some(expr) = expr {
+                    self.mutate_expression(expr);
+                }
+            }
+            Statement::MethodDefinition { name, parameters, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::ClassDefinition { name, superclass, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::ModuleDefinition { name, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Statement::Require(expr) => {
+                self.mutate_expression(expr);
+            }
+            Statement::Load(expr) => {
+                self.mutate_expression(expr);
+            }
+            _ => {}
+        }
+    }
+
+    fn mutate_expression(&mut self, expr: &mut Expression) {
+        // First mutate sub-expressions
+        match expr {
+            Expression::MethodCall { receiver, method, arguments } => {
+                self.mutate_expression(receiver);
+                for arg in arguments {
+                    self.mutate_expression(arg);
+                }
+            }
+            Expression::BinaryOp { left, op, right } => {
+                self.mutate_expression(left);
+                self.mutate_expression(right);
+            }
+            Expression::UnaryOp { op, operand } => {
+                self.mutate_expression(operand);
+            }
+            Expression::ArrayLiteral(elements) => {
+                for elem in elements {
+                    self.mutate_expression(elem);
+                }
+            }
+            Expression::HashLiteral(pairs) => {
+                for (_, value) in pairs {
+                    self.mutate_expression(value);
+                }
+            }
+            Expression::Block { parameters, body } => {
+                for stmt in body {
+                    self.mutate_statement(stmt);
+                }
+            }
+            Expression::SuperCall { arguments } => {
+                for arg in arguments {
+                    self.mutate_expression(arg);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 /// Optimize a program
 pub fn optimize_program(program: &mut Program) {
     // Apply constant folding
@@ -382,4 +620,12 @@ pub fn optimize_program(program: &mut Program) {
     // Apply dead code elimination
     let mut dead_code_eliminator = DeadCodeEliminator;
     dead_code_eliminator.mutate_program(program);
+
+    // Apply inline optimization
+    let mut inline_optimizer = InlineOptimizer;
+    inline_optimizer.mutate_program(program);
+
+    // Apply loop optimization
+    let mut loop_optimizer = LoopOptimizer;
+    loop_optimizer.mutate_program(program);
 }

@@ -1,12 +1,12 @@
 //! 基线编译器
-//! 
+//!
 //! 负责将指令序列编译为简单的机器码，编译速度快，适合执行热点代码。
 
 use crate::vm::{Context, Instruction};
 use ruby_types::{RubyError, RubyResult, RubyValue};
 
 /// 基线编译器
-/// 
+///
 /// 将指令序列编译为简单的机器码，编译速度快，执行速度比解释器快。
 pub struct BaselineCompiler {
     // 编译器配置
@@ -19,10 +19,10 @@ impl BaselineCompiler {
     }
 
     /// 编译指令序列
-    /// 
+    ///
     /// # 参数
     /// - `instructions`: 指令序列
-    /// 
+    ///
     /// # 返回值
     /// - `RubyResult<Box<dyn Fn(...)>>`: 编译后的函数
     pub fn compile(&self, instructions: &[Instruction]) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
@@ -43,28 +43,32 @@ impl BaselineCompiler {
                     Instruction::LoadLocal(index) => {
                         if let Some(value) = context.get_local(*index) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadGlobal(name) => {
                         if let Some(value) = context.get_global(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadInstance(name) => {
                         if let Some(value) = context.get_instance_variable(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadClass(name) => {
                         if let Some(value) = context.get_class_variable(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }

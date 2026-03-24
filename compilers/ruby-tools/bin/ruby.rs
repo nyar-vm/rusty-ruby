@@ -2,7 +2,8 @@
 //! 运行 Ruby 脚本
 
 use clap::Parser;
-use ruby_tools::RustyRubyFrontend;
+use ruby::Ruby;
+use ruby_types::RubyError;
 use std::fs;
 
 /// Ruby command-line tool
@@ -10,13 +11,11 @@ use std::fs;
 #[command(name = "ruby", version = "3.3.0", about = "Run Ruby scripts")]
 pub struct RubyArgs {
     /// Script file to execute
-    #[arg(index = 1)]
     script: Option<String>,
 
     /// Script arguments
     #[arg(last = true)]
     args: Vec<String>,
-
     /// Specify record separator (\0 if no argument)
     #[arg(short = '0', value_name = "octal")]
     record_separator: Option<String>,
@@ -118,20 +117,24 @@ fn run_script(script_path: &str) {
     println!("Running Ruby script: {}", script_path);
 
     match fs::read_to_string(script_path) {
-        Ok(content) => {
-            let frontend = RustyRubyFrontend::new();
-            match frontend.parse(&content) {
-                Ok(ast) => {
-                    println!("Script parsed successfully");
-                    println!("AST: {:?}", ast);
+        Ok(content) => match Ruby::new() {
+            Ok(mut ruby) => match ruby.execute_script(&content) {
+                Ok(_) => {
+                    println!("Script executed successfully");
                 }
                 Err(e) => {
-                    println!("Error parsing script: {:?}", e);
+                    eprintln!("Error executing script: {:?}", e);
+                    std::process::exit(1);
                 }
+            },
+            Err(e) => {
+                eprintln!("Error initializing Ruby runtime: {:?}", e);
+                std::process::exit(1);
             }
-        }
+        },
         Err(e) => {
-            println!("Error reading script: {:?}", e);
+            eprintln!("Error reading script file '{}': {:?}", script_path, e);
+            std::process::exit(1);
         }
     }
 }
@@ -140,14 +143,19 @@ fn run_script(script_path: &str) {
 fn run_command(command: &str) {
     println!("Running Ruby command: {}", command);
 
-    let frontend = RustyRubyFrontend::new();
-    match frontend.parse(command) {
-        Ok(ast) => {
-            println!("Command parsed successfully");
-            println!("AST: {:?}", ast);
-        }
+    match Ruby::new() {
+        Ok(mut ruby) => match ruby.execute_script(command) {
+            Ok(_) => {
+                println!("Command executed successfully");
+            }
+            Err(e) => {
+                eprintln!("Error executing command: {:?}", e);
+                std::process::exit(1);
+            }
+        },
         Err(e) => {
-            println!("Error parsing command: {:?}", e);
+            eprintln!("Error initializing Ruby runtime: {:?}", e);
+            std::process::exit(1);
         }
     }
 }

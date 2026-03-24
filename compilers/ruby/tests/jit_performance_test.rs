@@ -7,7 +7,7 @@ use std::time::Instant;
 #[test]
 pub fn test_jit_performance() {
     // 创建虚拟机
-    let vm = VM::new();
+    let mut vm = VM::new();
 
     // 生成一个计算斐波那契数列的指令序列
     // 这个序列会被执行多次，触发JIT编译

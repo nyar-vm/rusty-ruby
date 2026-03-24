@@ -3,7 +3,6 @@
 use crate::vm::{Context, Instruction};
 use ruby_types::{RubyError, RubyResult, RubyValue};
 
-
 /// JIT 编译器接口
 ///
 /// 定义 JIT 编译器的通用接口，所有 JIT 编译器实现都必须实现此接口。
@@ -502,8 +501,32 @@ impl JITCompiler for OptimizedJIT {
     /// # 返回值
     /// - `bool`：是否应该编译
     fn should_compile(&self, instructions: &[Instruction]) -> bool {
-        // 简单策略：指令数量大于阈值时编译
-        instructions.len() > self.compile_threshold
+        // 改进的策略：根据指令序列的特性决定是否编译
+        if instructions.len() < 3 {
+            // 小型代码块不编译
+            return false;
+        }
+
+        // 检查是否包含计算密集型指令
+        let has_arithmetic = instructions.iter().any(|instr| match instr {
+            Instruction::Add | Instruction::Sub | Instruction::Mul | Instruction::Div | Instruction::Mod | Instruction::Exp => true,
+            _ => false,
+        });
+
+        // 检查是否包含循环相关指令
+        let has_loop = instructions.iter().any(|instr| match instr {
+            Instruction::Jump(_) | Instruction::JumpIfFalse(_) | Instruction::JumpIfTrue(_) => true,
+            _ => false,
+        });
+
+        // 检查是否包含方法调用
+        let has_method_call = instructions.iter().any(|instr| match instr {
+            Instruction::CallMethod(_, _) => true,
+            _ => false,
+        });
+
+        // 对于计算密集型、有循环或包含方法调用的代码块进行编译
+        has_arithmetic || has_loop || has_method_call || instructions.len() > self.compile_threshold
     }
 }
 
@@ -519,6 +542,21 @@ pub struct JITCache {
     ///
     /// 追踪指令序列的执行次数，用于热点检测
     execution_counts: std::collections::HashMap<usize, usize>,
+    /// 编译状态缓存
+    ///
+    /// 存储编译状态，避免重复检查
+    compilation_status: std::collections::HashMap<usize, CompilationLevel>,
+}
+
+/// 编译级别
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum CompilationLevel {
+    /// 未编译
+    None,
+    /// 基线编译
+    Baseline,
+    /// 优化编译
+    Optimized,
 }
 
 impl JITCache {
@@ -527,7 +565,11 @@ impl JITCache {
     /// # 返回值
     /// - `Self`：新创建的JIT缓存实例
     pub fn new() -> Self {
-        Self { compiled_functions: std::collections::HashMap::new(), execution_counts: std::collections::HashMap::new() }
+        Self {
+            compiled_functions: std::collections::HashMap::new(),
+            execution_counts: std::collections::HashMap::new(),
+            compilation_status: std::collections::HashMap::new(),
+        }
     }
 
     /// 增加执行计数
@@ -570,7 +612,78 @@ impl JITCache {
     /// # 参数
     /// - `key`：指令序列的键（通常是内存地址）
     /// - `func`：编译后的函数
-    pub fn cache_compiled(&mut self, key: usize, func: Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>) {
+    /// - `level`：编译级别
+    pub fn cache_compiled(&mut self, key: usize, func: Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>, level: CompilationLevel) {
         self.compiled_functions.insert(key, func);
+        self.compilation_status.insert(key, level);
+    }
+
+    /// 获取编译级别
+    ///
+    /// # 参数
+    /// - `key`：指令序列的键（通常是内存地址）
+    ///
+    /// # 返回值
+    /// - `CompilationLevel`：编译级别
+    pub fn get_compilation_level(&self, key: usize) -> CompilationLevel {
+        *self.compilation_status.get(&key).unwrap_or(&CompilationLevel::None)
+    }
+
+    /// 清理过期缓存
+    ///
+    /// 移除执行次数较少的编译结果，释放内存
+    pub fn cleanup(&mut self, threshold: usize) {
+        let keys_to_remove: Vec<usize> = self.execution_counts.iter().filter(|(_, count)| **count < threshold).map(|(key, _)| *key).collect();
+
+        for key in keys_to_remove {
+            self.compiled_functions.remove(&key);
+            self.execution_counts.remove(&key);
+            self.compilation_status.remove(&key);
+        }
+    }
+
+    /// 根据代码特性确定编译级别
+    ///
+    /// # 参数
+    /// - `instructions`：指令序列
+    ///
+    /// # 返回值
+    /// - `CompilationLevel`：建议的编译级别
+    pub fn determine_compilation_level(&self, instructions: &[Instruction]) -> CompilationLevel {
+        let mut arithmetic_ops = 0;
+        let mut branch_ops = 0;
+        let mut call_ops = 0;
+        let mut has_loop = false;
+
+        // 分析指令序列特性
+        for instr in instructions {
+            match instr {
+                Instruction::Add | Instruction::Sub | Instruction::Mul | Instruction::Div | Instruction::Mod | Instruction::Exp => {
+                    arithmetic_ops += 1
+                }
+                Instruction::Jump(_) | Instruction::JumpIfFalse(_) | Instruction::JumpIfTrue(_) => {
+                    branch_ops += 1;
+                    has_loop = true;
+                }
+                Instruction::CallMethod(_, _) => call_ops += 1,
+                _ => {}
+            }
+        }
+
+        let total_instructions = instructions.len();
+
+        // 根据代码特性确定编译级别
+        if total_instructions > 50 || (has_loop && arithmetic_ops > total_instructions / 3) {
+            // 复杂代码或计算密集型循环，使用优化编译
+            CompilationLevel::Optimized
+        }
+        else if total_instructions > 10 || call_ops > 0 {
+            // 中等复杂度代码，使用基线编译
+            CompilationLevel::Baseline
+        }
+        else {
+            // 简单代码，不编译
+            CompilationLevel::None
+        }
     }
 }

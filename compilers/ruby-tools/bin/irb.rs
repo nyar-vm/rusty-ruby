@@ -2,7 +2,9 @@
 //! Provides interactive Ruby interpreter functionality
 
 use clap::Parser;
+use ruby::Ruby;
 use ruby_tools::RustyRubyFrontend;
+use ruby_types::RubyValue;
 use std::io::{self, BufRead, Write};
 
 /// IRB command-line tool
@@ -10,7 +12,6 @@ use std::io::{self, BufRead, Write};
 #[command(name = "irb", version = "1.11.0", about = "Interactive Ruby shell")]
 pub struct IrbArgs {
     /// Script file to execute
-    #[arg(index = 1)]
     script: Option<String>,
 
     /// Script arguments
@@ -48,40 +49,51 @@ fn start_interactive_session() {
     println!("Type 'exit' or 'quit' to exit.");
     println!();
 
-    let frontend = RustyRubyFrontend::new();
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     let mut input = String::new();
     let mut line_number = 1;
 
-    loop {
-        print!("irb(main):{:03}:0>", line_number);
-        stdout.flush().unwrap();
+    // Create Ruby runtime
+    match Ruby::new() {
+        Ok(mut ruby) => {
+            loop {
+                print!("irb(main):{:03}:0>", line_number);
+                stdout.flush().unwrap();
 
-        match stdin.lock().read_line(&mut input) {
-            Ok(0) => break, // EOF
-            Ok(_) => {
-                let trimmed_input = input.trim();
-                if trimmed_input == "exit" || trimmed_input == "quit" {
-                    break;
-                }
-                if !trimmed_input.is_empty() {
-                    match frontend.parse(trimmed_input) {
-                        Ok(ast) => {
-                            println!("=> {:?}", ast);
+                match stdin.lock().read_line(&mut input) {
+                    Ok(0) => break, // EOF
+                    Ok(_) => {
+                        let trimmed_input = input.trim();
+                        if trimmed_input == "exit" || trimmed_input == "quit" {
+                            break;
                         }
-                        Err(e) => {
-                            println!("Error: {}", e);
+                        if !trimmed_input.is_empty() {
+                            match ruby.execute_script(trimmed_input) {
+                                Ok(_) => {
+                                    // Try to get the result from the last expression
+                                    match ruby.get_global("$_").unwrap() {
+                                        RubyValue::Nil => println!("=> nil"),
+                                        value => println!("=> {:?}", value),
+                                    }
+                                }
+                                Err(e) => {
+                                    println!("Error: {:?}", e);
+                                }
+                            }
                         }
+                        input.clear();
+                        line_number += 1;
+                    }
+                    Err(e) => {
+                        println!("Error reading input: {:?}", e);
+                        break;
                     }
                 }
-                input.clear();
-                line_number += 1;
             }
-            Err(e) => {
-                println!("Error reading input: {:?}", e);
-                break;
-            }
+        }
+        Err(e) => {
+            println!("Error initializing Ruby runtime: {:?}", e);
         }
     }
 

@@ -9,7 +9,7 @@ default-members = [
 
 
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 authors = ["RBQ Team"]
 license = "MIT OR Apache-2.0"
@@ -52,9 +52,9 @@ oak-toml = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", versi
 oak-ruby = { git = "https://github.com/ygg-lang/oaks.git", branch = "dev", version = "0.0.10" }
 
 # Rusty Ruby crates
-ruby-types = { path = "compilers/ruby-types" , version = "0.0.1" }
-ruby-ir = { path = "compilers/ruby-ir" , version = "0.0.1" }
-ruby = { path = "compilers/ruby" , version = "0.0.1" }
+ruby-types = { path = "compilers/ruby-types" , version = "0.0.2" }
+ruby-ir = { path = "compilers/ruby-ir" , version = "0.0.2" }
+ruby = { path = "compilers/ruby" , version = "0.0.2" }
 
 # Macro dependencies
 syn = { version = "2.0", features = ["full", "extra-traits"] }

@@ -19,5 +19,9 @@ ruby-types = { workspace = true }
 ruby-ir = { workspace = true }
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
+js-sys = "0.3.64"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.34"
 
 

@@ -1,20 +1,18 @@
 #![doc = include_str!("readme.md")]
-
 #![warn(missing_docs)]
-
 
 use oak_core::{Builder, TextEdit};
 use oak_ruby::{RubyBuilder, RubyLanguage};
 use ruby_types::{RubyError, RubyResult, RubyValue};
 
+mod architecture;
 mod codegen;
 mod gc;
 mod jit;
-mod vm;
-mod architecture;
 mod profiler;
-use codegen::{ast_to_ir, ir_to_vm_instructions};
+mod vm;
 use architecture::execution_engine::ExecutionEngine;
+use codegen::{ast_to_ir, ir_to_vm_instructions};
 
 /// 导出VM指令集
 pub use vm::Instruction;
@@ -45,11 +43,7 @@ impl Ruby {
     /// # 返回值
     /// - `Ok(Self)`：成功创建 Ruby 运行时环境
     pub fn new() -> Result<Self> {
-        Ok(Self { 
-            language: RubyLanguage::new(), 
-            vm: crate::VM::new(),
-            execution_engine: ExecutionEngine::new()
-        })
+        Ok(Self { language: RubyLanguage::new(), vm: crate::VM::new(), execution_engine: ExecutionEngine::new() })
     }
 
     /// 执行 Ruby 脚本
@@ -516,7 +510,7 @@ impl ToRubyValue for &str {
 impl<T: ToRubyValue> ToRubyValue for Vec<T> {
     fn to_ruby_value(&self) -> RubyValue {
         let values: Vec<_> = self.iter().map(|item| item.to_ruby_value()).collect();
-        RubyValue::Array(values)
+        RubyValue::Array(values.into_iter().collect())
     }
 }
 

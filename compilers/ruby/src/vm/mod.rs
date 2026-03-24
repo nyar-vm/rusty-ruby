@@ -1,7 +1,7 @@
 #![doc = include_str!("readme.md")]
 
 use crate::{
-    gc::{create_gc, GCType, GC},
+    gc::{GC, GCType, create_gc},
     jit::{JITCache, JITCompiler, OptimizedJIT},
     profiler::{Debugger, Profiler, Visualizer},
 };
@@ -682,7 +682,7 @@ impl VMState {
             // 编译指令序列
             match self.jit_compiler.compile(instructions) {
                 Ok(compiled_func) => {
-                    self.jit_cache.cache_compiled(instructions_key, compiled_func);
+                    self.jit_cache.cache_compiled(instructions_key, compiled_func, crate::jit::CompilationLevel::Baseline);
                     println!("JIT compiled instructions with {} instructions", instructions.len());
                 }
                 Err(err) => {

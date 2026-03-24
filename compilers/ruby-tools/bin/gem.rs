@@ -58,12 +58,7 @@ pub enum GemCommand {
         #[arg(index = 1)]
         directory: Option<String>,
     },
-    /// Display help information about RubyGems
-    Help {
-        /// Command name
-        #[arg(index = 1)]
-        command: Option<String>,
-    },
+
     /// Install a gem into the local repository
     Install {
         /// Gem name
@@ -258,7 +253,6 @@ fn main() {
         GemCommand::Uninstall { gem, .. } => uninstall_gem(gem.as_ref()),
         GemCommand::List { pattern } => list_gems(pattern.as_ref()),
         GemCommand::Update { gem } => update_gem(gem.as_ref()),
-        GemCommand::Help { .. } => print_help(),
         _ => {
             println!("Command not yet implemented");
         }

@@ -1,10 +1,10 @@
 //! 垃圾收集系统
-//! 
+//!
 //! 实现分代垃圾收集器，支持增量收集和并发收集。
 
+pub mod concurrent;
 pub mod generational;
 pub mod incremental;
-pub mod concurrent;
 
 use ruby_types::RubyValue;
 
@@ -31,10 +31,10 @@ pub enum GCType {
 }
 
 /// 创建垃圾收集器
-/// 
+///
 /// # 参数
 /// - `gc_type`：垃圾收集器类型
-/// 
+///
 /// # 返回值
 /// - `Box<dyn GC>`：垃圾收集器实例
 pub fn create_gc(gc_type: GCType) -> Box<dyn GC> {

@@ -1,5 +1,5 @@
 //! 调试器
-//! 
+//!
 //! 用于调试Ruby代码的执行过程，包括断点设置、单步执行等功能。
 
 use crate::vm::{Context, Instruction};
@@ -29,7 +29,7 @@ pub enum DebuggerState {
 }
 
 /// 调试器
-/// 
+///
 /// 用于调试Ruby代码的执行过程。
 pub struct Debugger {
     /// 断点集合
@@ -43,11 +43,7 @@ pub struct Debugger {
 impl Debugger {
     /// 创建新的调试器
     pub fn new() -> Self {
-        Self {
-            breakpoints: HashSet::new(),
-            state: DebuggerState::Stopped,
-            context: None,
-        }
+        Self { breakpoints: HashSet::new(), state: DebuggerState::Stopped, context: None }
     }
 
     /// 附加到上下文

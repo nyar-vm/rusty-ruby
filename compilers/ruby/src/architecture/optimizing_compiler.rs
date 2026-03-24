@@ -1,16 +1,16 @@
 //! 优化编译器
-//! 
+//!
 //! 负责将指令序列编译为优化的机器码，支持类型推断和各种优化策略。
 
 use crate::vm::{Context, Instruction};
-use ruby_types::{RubyError, RubyResult, RubyValue};
 use cranelift::prelude::{types, *};
 use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext};
-use cranelift_module::{Module};
 use cranelift_jit::{JITBuilder, JITModule};
+use cranelift_module::Module;
+use ruby_types::{RubyError, RubyResult, RubyValue};
 
 /// 优化编译器
-/// 
+///
 /// 将指令序列编译为优化的机器码，执行速度快，适合执行热点代码。
 pub struct OptimizingCompiler {
     /// JIT 模块，用于生成和执行机器码
@@ -25,21 +25,17 @@ impl OptimizingCompiler {
     /// 创建新的优化编译器
     pub fn new() -> Self {
         let builder = JITBuilder::new(cranelift_module::default_libcall_names()).expect("Failed to create JIT builder");
-        
+
         let jit_module = JITModule::new(builder);
-        
-        Self {
-            jit_module: Some(jit_module),
-            func_builder_ctx: FunctionBuilderContext::new(),
-            type_info: Vec::new(),
-        }
+
+        Self { jit_module: Some(jit_module), func_builder_ctx: FunctionBuilderContext::new(), type_info: Vec::new() }
     }
 
     /// 编译指令序列
-    /// 
+    ///
     /// # 参数
     /// - `instructions`: 指令序列
-    /// 
+    ///
     /// # 返回值
     /// - `RubyResult<Box<dyn Fn(...)>>`: 编译后的函数
     pub fn compile(&mut self, instructions: &[Instruction]) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
@@ -53,30 +49,34 @@ impl OptimizingCompiler {
         if is_hot_path && self.jit_module.is_some() {
             // 对于热点路径，使用 Cranelift 生成优化的机器码
             self.compile_with_cranelift(instructions)
-        } else {
+        }
+        else {
             // 对于非热点路径，使用标准编译实现
             self.compile_with_interpreter(instructions)
         }
     }
 
     /// 使用 Cranelift 编译热点路径
-    fn compile_with_cranelift(&mut self, instructions: &[Instruction]) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
+    fn compile_with_cranelift(
+        &mut self,
+        instructions: &[Instruction],
+    ) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
         // 实现类型推断
         self.perform_type_inference(instructions);
-        
+
         // 生成优化的机器码
         // 这里只是一个简化的实现，实际的 Cranelift 集成会更复杂
-        
+
         // 为当前指令序列创建一个优化的执行闭包
         let instructions_copy = instructions.to_vec();
-        
+
         // 这里我们使用一个简化的实现，实际的 Cranelift 集成会更复杂
         // 我们会在后续的版本中实现完整的 Cranelift 集成
-        
+
         Ok(Box::new(move |context, registers| {
             // 应用优化策略
             let optimized_instructions = optimize_instructions(&instructions_copy);
-            
+
             let mut pc = 0;
             while pc < optimized_instructions.len() {
                 let instr = &optimized_instructions[pc];
@@ -90,7 +90,8 @@ impl OptimizingCompiler {
                     Instruction::LoadGlobal(name) => {
                         if let Some(value) = context.get_global(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
@@ -156,15 +157,18 @@ impl OptimizingCompiler {
     }
 
     /// 使用解释器编译非热点路径
-    fn compile_with_interpreter(&self, instructions: &[Instruction]) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
+    fn compile_with_interpreter(
+        &self,
+        instructions: &[Instruction],
+    ) -> RubyResult<Box<dyn Fn(&mut Context, &mut [RubyValue]) -> RubyResult<()>>> {
         let instructions_copy = instructions.to_vec();
-        
+
         Ok(Box::new(move |context, registers| {
             let mut pc = 0;
             while pc < instructions_copy.len() {
                 let instr = &instructions_copy[pc];
                 pc += 1;
-                
+
                 match instr {
                     // 加载指令
                     Instruction::LoadConst(value) => {
@@ -173,28 +177,32 @@ impl OptimizingCompiler {
                     Instruction::LoadLocal(index) => {
                         if let Some(value) = context.get_local(*index) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadGlobal(name) => {
                         if let Some(value) = context.get_global(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadInstance(name) => {
                         if let Some(value) = context.get_instance_variable(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
                     Instruction::LoadClass(name) => {
                         if let Some(value) = context.get_class_variable(name.as_str()) {
                             registers[0] = value.clone();
-                        } else {
+                        }
+                        else {
                             registers[0] = RubyValue::Nil;
                         }
                     }
@@ -397,7 +405,7 @@ impl OptimizingCompiler {
     fn perform_type_inference(&mut self, instructions: &[Instruction]) {
         // 初始化类型信息
         self.type_info = vec![None; instructions.len()];
-        
+
         // 简单的类型推断实现
         // 实际的类型推断系统会更复杂，可能需要数据流分析、类型传播等
         for (i, instr) in instructions.iter().enumerate() {
@@ -444,21 +452,24 @@ fn execute_instruction(context: &mut Context, registers: &mut [RubyValue], instr
         Instruction::LoadLocal(index) => {
             if let Some(value) = context.get_local(*index) {
                 registers[0] = value.clone();
-            } else {
+            }
+            else {
                 registers[0] = RubyValue::Nil;
             }
         }
         Instruction::LoadInstance(name) => {
             if let Some(value) = context.get_instance_variable(name.as_str()) {
                 registers[0] = value.clone();
-            } else {
+            }
+            else {
                 registers[0] = RubyValue::Nil;
             }
         }
         Instruction::LoadClass(name) => {
             if let Some(value) = context.get_class_variable(name.as_str()) {
                 registers[0] = value.clone();
-            } else {
+            }
+            else {
                 registers[0] = RubyValue::Nil;
             }
         }
@@ -608,24 +619,24 @@ fn execute_instruction(context: &mut Context, registers: &mut [RubyValue], instr
 /// 优化指令序列
 fn optimize_instructions(instructions: &[Instruction]) -> Vec<Instruction> {
     let mut optimized = Vec::new();
-    
+
     // 应用各种优化策略
     // 1. 常量折叠
     // 2. 死代码消除
     // 3. 内联
     // 4. 循环优化
-    
+
     // 这里我们实现一个简单的常量折叠优化
     let mut i = 0;
     while i < instructions.len() {
         let instr = &instructions[i];
-        
+
         // 常量折叠
         if let Instruction::Add = instr {
             // 检查前两条指令是否是加载常量
             if i >= 2 {
-                if let Instruction::LoadConst(a) = &instructions[i-2] {
-                    if let Instruction::LoadConst(b) = &instructions[i-1] {
+                if let Instruction::LoadConst(a) = &instructions[i - 2] {
+                    if let Instruction::LoadConst(b) = &instructions[i - 1] {
                         // 执行常量折叠
                         let result = match (a, b) {
                             (RubyValue::Integer(x), RubyValue::Integer(y)) => RubyValue::Integer(x + y),
@@ -638,8 +649,8 @@ fn optimize_instructions(instructions: &[Instruction]) -> Vec<Instruction> {
                             }
                             _ => {
                                 // 无法折叠，保留原指令
-                                optimized.push(instructions[i-2].clone());
-                                optimized.push(instructions[i-1].clone());
+                                optimized.push(instructions[i - 2].clone());
+                                optimized.push(instructions[i - 1].clone());
                                 optimized.push(instr.clone());
                                 i += 1;
                                 continue;
@@ -653,13 +664,13 @@ fn optimize_instructions(instructions: &[Instruction]) -> Vec<Instruction> {
                 }
             }
         }
-        
+
         // 其他优化策略...
-        
+
         // 保留原指令
         optimized.push(instr.clone());
         i += 1;
     }
-    
+
     optimized
 }

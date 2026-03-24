@@ -1,0 +1,9 @@
+mod ffi_test;
+mod gc_test;
+mod jit_performance_test;
+mod jit_test;
+mod language_spec_test;
+mod optimization_test;
+mod performance_test;
+mod runtime_test;
+mod vm_test;

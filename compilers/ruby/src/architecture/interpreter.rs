@@ -1,12 +1,12 @@
 //! 解释器
-//! 
+//!
 //! 负责解释执行指令序列，是执行引擎的第一级。
 
 use crate::vm::{Context, Instruction};
 use ruby_types::{RubyError, RubyResult, RubyValue};
 
 /// 解释器
-/// 
+///
 /// 解释执行指令序列，启动速度快，适合执行冷代码。
 pub struct Interpreter {
     // 解释器配置
@@ -19,12 +19,12 @@ impl Interpreter {
     }
 
     /// 执行指令序列
-    /// 
+    ///
     /// # 参数
     /// - `instructions`: 指令序列
     /// - `context`: 执行上下文
     /// - `registers`: 寄存器
-    /// 
+    ///
     /// # 返回值
     /// - `RubyResult<()>`: 执行结果
     pub fn execute(&self, instructions: &[Instruction], context: &mut Context, registers: &mut [RubyValue]) -> RubyResult<()> {
@@ -41,28 +41,32 @@ impl Interpreter {
                 Instruction::LoadLocal(index) => {
                     if let Some(value) = context.get_local(*index) {
                         registers[0] = value.clone();
-                    } else {
+                    }
+                    else {
                         registers[0] = RubyValue::Nil;
                     }
                 }
                 Instruction::LoadGlobal(name) => {
                     if let Some(value) = context.get_global(name.as_str()) {
                         registers[0] = value.clone();
-                    } else {
+                    }
+                    else {
                         registers[0] = RubyValue::Nil;
                     }
                 }
                 Instruction::LoadInstance(name) => {
                     if let Some(value) = context.get_instance_variable(name.as_str()) {
                         registers[0] = value.clone();
-                    } else {
+                    }
+                    else {
                         registers[0] = RubyValue::Nil;
                     }
                 }
                 Instruction::LoadClass(name) => {
                     if let Some(value) = context.get_class_variable(name.as_str()) {
                         registers[0] = value.clone();
-                    } else {
+                    }
+                    else {
                         registers[0] = RubyValue::Nil;
                     }
                 }

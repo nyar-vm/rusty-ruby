@@ -1,11 +1,16 @@
 //! 并发垃圾收集器
-//! 
+//!
 //! 实现并发垃圾收集策略，在后台线程中执行垃圾收集，减少对主线程的影响。
 
 use ruby_types::RubyValue;
-use std::collections::HashSet;
-use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
-use std::thread;
+use std::{
+    collections::HashSet,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
+    thread,
+};
 
 /// Send and Sync wrapper for raw pointers
 struct SendablePtr(*const RubyValue);
@@ -41,7 +46,7 @@ enum ConcurrentGCState {
 }
 
 /// 并发垃圾收集器
-/// 
+///
 /// 在后台线程中执行垃圾收集，减少对主线程的影响。
 pub struct ConcurrentGC {
     /// 已分配的对象
@@ -78,19 +83,39 @@ impl ConcurrentGC {
     }
 
     /// 分配新对象
-    /// 
+    ///
     /// # 参数
     /// - `value`：要分配的 Ruby 对象
-    /// 
+    ///
     /// # 返回值
     /// - `RubyValue`：分配的对象
     pub fn allocate(&mut self, value: RubyValue) -> RubyValue {
-        // 暂时直接返回值，后续需要修改为通过 GC 分配
-        value
+        // 启动垃圾收集线程（如果未启动）
+        self.start();
+
+        // 创建对象的 Box 包装
+        let boxed_value = Box::new(value);
+
+        // 将对象添加到对象列表
+        let mut objects = self.objects.lock().unwrap();
+        objects.push(boxed_value);
+
+        // 更新内存使用量
+        let mut memory_used = self.memory_used.lock().unwrap();
+        *memory_used += 1;
+
+        // 检查是否需要执行垃圾收集
+        if *memory_used >= self.threshold {
+            // 启动垃圾收集
+            *self.state.lock().unwrap() = ConcurrentGCState::Marking;
+        }
+
+        // 返回对象的克隆
+        *(*objects.last().unwrap()).clone()
     }
 
     /// 标记根对象
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     fn mark_roots(&self, roots: &[&RubyValue]) {
@@ -102,7 +127,7 @@ impl ConcurrentGC {
     }
 
     /// 标记阶段
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     fn mark(&self, roots: &[&RubyValue]) {
@@ -133,7 +158,8 @@ impl ConcurrentGC {
             let obj_ptr = SendablePtr(object.as_ref() as *const RubyValue);
             if marked.contains(&obj_ptr) {
                 new_objects.push(object);
-            } else {
+            }
+            else {
                 // 对象被回收
                 *memory_used -= 1;
             }
@@ -143,7 +169,7 @@ impl ConcurrentGC {
     }
 
     /// 垃圾收集线程函数
-    /// 
+    ///
     /// # 参数
     /// - `objects`：对象列表
     /// - `memory_used`：内存使用量
@@ -208,7 +234,8 @@ impl ConcurrentGC {
                         let obj_ptr = SendablePtr(object.as_ref() as *const RubyValue);
                         if marked.contains(&obj_ptr) {
                             new_objects.push(object);
-                        } else {
+                        }
+                        else {
                             // 对象被回收
                             *memory_used -= 1;
                         }
@@ -254,7 +281,7 @@ impl ConcurrentGC {
     }
 
     /// 执行垃圾收集
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     pub fn collect(&mut self, roots: &[&RubyValue]) {
@@ -271,7 +298,7 @@ impl ConcurrentGC {
     }
 
     /// 获取当前内存使用量
-    /// 
+    ///
     /// # 返回值
     /// - `usize`：当前内存使用量
     pub fn memory_used(&self) -> usize {
@@ -279,7 +306,7 @@ impl ConcurrentGC {
     }
 
     /// 设置内存阈值
-    /// 
+    ///
     /// # 参数
     /// - `threshold`：新的内存阈值
     pub fn set_threshold(&mut self, threshold: usize) {
@@ -287,7 +314,7 @@ impl ConcurrentGC {
     }
 
     /// 启用日志
-    /// 
+    ///
     /// # 参数
     /// - `enable`：是否启用日志
     pub fn set_logging(&mut self, enable: bool) {

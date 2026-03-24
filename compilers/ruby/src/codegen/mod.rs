@@ -120,16 +120,18 @@ impl ConversionContext {
 
                 self.functions.insert(function_id, function);
 
-                Ok(Statement::MethodDefinition {
-                    name: name.clone(),
-                    parameters: params.clone(),
-                    body: body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect(),
-                })
+                let mut ir_body = Vec::new();
+                for stmt in body {
+                    ir_body.push(self.convert_statement(stmt)?);
+                }
+
+                Ok(Statement::MethodDefinition { name: name.clone(), parameters: params.clone(), body: ir_body })
             }
             StatementNode::ClassDef { name, superclass, body, .. } => {
                 let class_id = self.next_class_id();
 
                 let mut methods = HashMap::new();
+                let mut ir_body = Vec::new();
 
                 // Process class body
                 for stmt in body {
@@ -158,17 +160,15 @@ impl ConversionContext {
                         self.functions.insert(function_id, function);
                         methods.insert(method_name.clone(), function_id);
                     }
+                    let ir_stmt = self.convert_statement(stmt)?;
+                    ir_body.push(ir_stmt);
                 }
 
                 let class = Class { id: class_id, name: name.clone(), superclass: superclass.clone(), methods };
 
                 self.classes.insert(class_id, class);
 
-                Ok(Statement::ClassDefinition {
-                    name: name.clone(),
-                    superclass: superclass.clone(),
-                    body: body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect(),
-                })
+                Ok(Statement::ClassDefinition { name: name.clone(), superclass: superclass.clone(), body: ir_body })
             }
             StatementNode::Assignment { target, value, .. } => {
                 let ir_value = self.convert_expression(value)?;
@@ -191,21 +191,34 @@ impl ConversionContext {
             }
             StatementNode::If { condition, then_body, else_body, .. } => {
                 let ir_condition = self.convert_expression(condition)?;
-                let ir_then_body: Vec<Statement> = then_body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect();
-                let ir_else_body: Vec<Statement> =
-                    else_body.as_ref().map(|body| body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect()).unwrap_or_default();
+                let mut ir_then_body = Vec::new();
+                for stmt in then_body {
+                    ir_then_body.push(self.convert_statement(stmt)?);
+                }
+                let mut ir_else_body = Vec::new();
+                if let Some(body) = else_body {
+                    for stmt in body {
+                        ir_else_body.push(self.convert_statement(stmt)?);
+                    }
+                }
 
                 Ok(Statement::If { condition: ir_condition, then_branch: ir_then_body, else_branch: ir_else_body })
             }
             StatementNode::While { condition, body, .. } => {
                 let ir_condition = self.convert_expression(condition)?;
-                let ir_body: Vec<Statement> = body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect();
+                let mut ir_body = Vec::new();
+                for stmt in body {
+                    ir_body.push(self.convert_statement(stmt)?);
+                }
 
                 Ok(Statement::While { condition: ir_condition, body: ir_body })
             }
             StatementNode::Until { condition, body, .. } => {
                 let ir_condition = self.convert_expression(condition)?;
-                let ir_body: Vec<Statement> = body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect();
+                let mut ir_body = Vec::new();
+                for stmt in body {
+                    ir_body.push(self.convert_statement(stmt)?);
+                }
 
                 Ok(Statement::Until { condition: ir_condition, body: ir_body })
             }
@@ -215,20 +228,29 @@ impl ConversionContext {
 
                 for (cond, body) in when_clauses {
                     let ir_cond = self.convert_expression(cond)?;
-                    let ir_body: Vec<Statement> = body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect();
+                    let mut ir_body = Vec::new();
+                    for stmt in body {
+                        ir_body.push(self.convert_statement(stmt)?);
+                    }
                     ir_when_clauses.push((ir_cond, ir_body));
                 }
 
-                let ir_else_clause = else_clause
-                    .as_ref()
-                    .map(|body| body.iter().map(|stmt| self.convert_statement(stmt).unwrap()).collect())
-                    .unwrap_or_default();
+                let mut ir_else_clause = Vec::new();
+                if let Some(body) = else_clause {
+                    for stmt in body {
+                        ir_else_clause.push(self.convert_statement(stmt)?);
+                    }
+                }
 
                 Ok(Statement::Case { value: ir_value, when_clauses: ir_when_clauses, else_clause: ir_else_clause })
             }
             StatementNode::Return { value, .. } => {
-                let ir_value = value.as_ref().map(|expr| self.convert_expression(expr).unwrap());
-                Ok(Statement::Return(ir_value))
+                let ir_value = value.as_ref().map(|expr| self.convert_expression(expr));
+                match ir_value {
+                    Some(Ok(expr)) => Ok(Statement::Return(Some(expr))),
+                    Some(Err(err)) => Err(err),
+                    None => Ok(Statement::Return(None)),
+                }
             }
             StatementNode::Next { .. } => Ok(Statement::Next),
             StatementNode::Redo { .. } => Ok(Statement::Redo),
@@ -251,6 +273,10 @@ impl ConversionContext {
                     // Class variable
                     Ok(Expression::ClassVariable(name.clone()))
                 }
+                else if name == "self" {
+                    // Self reference
+                    Ok(Expression::SelfRef)
+                }
                 else {
                     // Local variable
                     Ok(Expression::Variable(name.clone()))
@@ -261,14 +287,16 @@ impl ConversionContext {
                 Ok(Expression::Literal(ruby_value))
             }
             ExpressionNode::MethodCall { receiver, method, args, .. } => {
-                let ir_receiver = receiver.as_ref().map(|expr| Box::new(self.convert_expression(expr).unwrap()));
-                let ir_args: Vec<Expression> = args.iter().map(|arg| self.convert_expression(arg).unwrap()).collect();
+                let ir_receiver = match receiver {
+                    Some(expr) => Box::new(self.convert_expression(expr)?),
+                    None => Box::new(Expression::SelfRef),
+                };
+                let mut ir_args = Vec::new();
+                for arg in args {
+                    ir_args.push(self.convert_expression(arg)?);
+                }
 
-                Ok(Expression::MethodCall {
-                    receiver: ir_receiver.unwrap_or_else(|| Box::new(Expression::SelfRef)),
-                    method: method.clone(),
-                    arguments: ir_args,
-                })
+                Ok(Expression::MethodCall { receiver: ir_receiver, method: method.clone(), arguments: ir_args })
             }
             ExpressionNode::BinaryOp { left, operator, right, .. } => {
                 let ir_left = Box::new(self.convert_expression(left)?);
@@ -284,7 +312,10 @@ impl ConversionContext {
                 Ok(Expression::UnaryOp { op: ir_operator, operand: ir_operand })
             }
             ExpressionNode::Array { elements, .. } => {
-                let ir_elements: Vec<Expression> = elements.iter().map(|elem| self.convert_expression(elem).unwrap()).collect();
+                let mut ir_elements = Vec::new();
+                for elem in elements {
+                    ir_elements.push(self.convert_expression(elem)?);
+                }
                 Ok(Expression::ArrayLiteral(ir_elements))
             }
             ExpressionNode::Hash { pairs, .. } => {

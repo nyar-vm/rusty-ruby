@@ -1,5 +1,5 @@
 //! 可视化工具
-//! 
+//!
 //! 用于可视化编译和优化过程，包括代码流程、优化效果等。
 
 use crate::architecture::{execution_engine::CompilationState, hotness_detector::HotnessDetector};
@@ -30,7 +30,7 @@ pub struct VisualizationData {
 }
 
 /// 可视化工具
-/// 
+///
 /// 用于可视化编译和优化过程。
 pub struct Visualizer {
     /// 可视化数据

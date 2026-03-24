@@ -1,5 +1,5 @@
 //! 分代垃圾收集器
-//! 
+//!
 //! 实现基于世代的垃圾收集策略，将对象分为年轻代和老年代。
 
 use ruby_types::RubyValue;
@@ -25,7 +25,7 @@ struct GenerationConfig {
 }
 
 /// 分代垃圾收集器
-/// 
+///
 /// 将对象分为年轻代和老年代，不同代使用不同的收集策略。
 pub struct GenerationalGC {
     /// 年轻代对象
@@ -52,12 +52,12 @@ impl GenerationalGC {
             old_objects: Vec::new(),
             young_config: GenerationConfig {
                 generation: Generation::Young,
-                threshold: 256 * 1024, // 256KB 阈值
-                promotion_age: 2, // 2次收集后晋升
+                threshold: 512 * 1024, // 512KB 阈值，增加年轻代容量
+                promotion_age: 3,      // 3次收集后晋升，增加年轻代对象停留时间
             },
             old_config: GenerationConfig {
                 generation: Generation::Old,
-                threshold: 1024 * 1024, // 1MB 阈值
+                threshold: 2 * 1024 * 1024, // 2MB 阈值，增加老年代容量
                 promotion_age: 0,
             },
             object_ages: std::collections::HashMap::new(),
@@ -67,19 +67,33 @@ impl GenerationalGC {
     }
 
     /// 分配新对象
-    /// 
+    ///
     /// # 参数
     /// - `value`：要分配的 Ruby 对象
-    /// 
+    ///
     /// # 返回值
     /// - `RubyValue`：分配的对象
     pub fn allocate(&mut self, value: RubyValue) -> RubyValue {
-        // 暂时直接返回值，后续需要修改为通过 GC 分配
-        value
+        // 创建对象的 Box 包装
+        let boxed_value = Box::new(value);
+        let obj_ptr = boxed_value.as_ref() as *const RubyValue;
+
+        // 将对象添加到年轻代
+        self.young_objects.push(boxed_value);
+        self.object_ages.insert(obj_ptr, 0);
+        self.memory_used += 1;
+
+        // 检查是否需要执行垃圾收集
+        if self.memory_used >= self.young_config.threshold {
+            // 这里应该触发垃圾收集，但暂时返回值
+        }
+
+        // 返回对象的克隆
+        *(*self.young_objects.last().unwrap()).clone()
     }
 
     /// 标记根对象
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     /// - `marked`：已标记对象的集合
@@ -90,10 +104,10 @@ impl GenerationalGC {
     }
 
     /// 标记年轻代
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
-    /// 
+    ///
     /// # 返回值
     /// - `HashSet<*const RubyValue>`：已标记对象的集合
     fn mark_young(&self, roots: &[&RubyValue]) -> HashSet<*const RubyValue> {
@@ -103,10 +117,10 @@ impl GenerationalGC {
     }
 
     /// 标记老年代
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
-    /// 
+    ///
     /// # 返回值
     /// - `HashSet<*const RubyValue>`：已标记对象的集合
     fn mark_old(&self, roots: &[&RubyValue]) -> HashSet<*const RubyValue> {
@@ -116,7 +130,7 @@ impl GenerationalGC {
     }
 
     /// 清除年轻代
-    /// 
+    ///
     /// # 参数
     /// - `marked`：已标记对象的集合
     fn sweep_young(&mut self, marked: &HashSet<*const RubyValue>) {
@@ -132,12 +146,14 @@ impl GenerationalGC {
                     // 晋升到老年代
                     promoted_objects.push(object);
                     self.object_ages.remove(&obj_ptr);
-                } else {
+                }
+                else {
                     // 留在年轻代
                     new_young_objects.push(object);
                     self.object_ages.insert(obj_ptr, age);
                 }
-            } else {
+            }
+            else {
                 // 对象被回收
                 self.memory_used -= 1;
                 self.object_ages.remove(&obj_ptr);
@@ -149,7 +165,7 @@ impl GenerationalGC {
     }
 
     /// 清除老年代
-    /// 
+    ///
     /// # 参数
     /// - `marked`：已标记对象的集合
     fn sweep_old(&mut self, marked: &HashSet<*const RubyValue>) {
@@ -159,7 +175,8 @@ impl GenerationalGC {
             let obj_ptr = object.as_ref() as *const RubyValue;
             if marked.contains(&obj_ptr) {
                 new_old_objects.push(object);
-            } else {
+            }
+            else {
                 // 对象被回收
                 self.memory_used -= 1;
             }
@@ -169,7 +186,7 @@ impl GenerationalGC {
     }
 
     /// 执行年轻代垃圾收集
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     pub fn collect_young(&mut self, roots: &[&RubyValue]) {
@@ -189,7 +206,7 @@ impl GenerationalGC {
     }
 
     /// 执行老年代垃圾收集
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     pub fn collect_old(&mut self, roots: &[&RubyValue]) {
@@ -208,7 +225,7 @@ impl GenerationalGC {
     }
 
     /// 执行全量垃圾收集
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     pub fn collect(&mut self, roots: &[&RubyValue]) {
@@ -219,7 +236,7 @@ impl GenerationalGC {
     }
 
     /// 获取当前内存使用量
-    /// 
+    ///
     /// # 返回值
     /// - `usize`：当前内存使用量
     pub fn memory_used(&self) -> usize {
@@ -227,7 +244,7 @@ impl GenerationalGC {
     }
 
     /// 设置内存阈值
-    /// 
+    ///
     /// # 参数
     /// - `generation`：代的类型
     /// - `threshold`：新的内存阈值
@@ -239,7 +256,7 @@ impl GenerationalGC {
     }
 
     /// 启用日志
-    /// 
+    ///
     /// # 参数
     /// - `enable`：是否启用日志
     pub fn set_logging(&mut self, enable: bool) {

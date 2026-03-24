@@ -1,5 +1,5 @@
 //! 增量垃圾收集器
-//! 
+//!
 //! 实现增量垃圾收集策略，将垃圾收集过程分成多个小步骤，减少暂停时间。
 
 use ruby_types::RubyValue;
@@ -19,7 +19,7 @@ enum IncrementalGCState {
 }
 
 /// 增量垃圾收集器
-/// 
+///
 /// 将垃圾收集过程分成多个小步骤，在应用程序执行的间隙进行。
 pub struct IncrementalGC {
     /// 已分配的对象
@@ -56,19 +56,32 @@ impl IncrementalGC {
     }
 
     /// 分配新对象
-    /// 
+    ///
     /// # 参数
     /// - `value`：要分配的 Ruby 对象
-    /// 
+    ///
     /// # 返回值
     /// - `RubyValue`：分配的对象
     pub fn allocate(&mut self, value: RubyValue) -> RubyValue {
-        // 暂时直接返回值，后续需要修改为通过 GC 分配
-        value
+        // 创建对象的 Box 包装
+        let boxed_value = Box::new(value);
+
+        // 将对象添加到对象列表
+        self.objects.push(boxed_value);
+        self.memory_used += 1;
+
+        // 检查是否需要执行垃圾收集
+        if self.memory_used >= self.threshold {
+            // 执行一次增量垃圾收集步骤
+            self.collect_step(&[], 100); // 100 个对象为一步
+        }
+
+        // 返回对象的克隆
+        *(*self.objects.last().unwrap()).clone()
     }
 
     /// 标记根对象
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     fn mark_roots(&mut self, roots: &[&RubyValue]) {
@@ -78,11 +91,11 @@ impl IncrementalGC {
     }
 
     /// 执行增量标记步骤
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     /// - `step_size`：步骤大小
-    /// 
+    ///
     /// # 返回值
     /// - `bool`：标记阶段是否完成
     fn incremental_mark(&mut self, roots: &[&RubyValue], step_size: usize) -> bool {
@@ -109,10 +122,10 @@ impl IncrementalGC {
     }
 
     /// 执行增量清除步骤
-    /// 
+    ///
     /// # 参数
     /// - `step_size`：步骤大小
-    /// 
+    ///
     /// # 返回值
     /// - `bool`：清除阶段是否完成
     fn incremental_sweep(&mut self, step_size: usize) -> bool {
@@ -120,7 +133,7 @@ impl IncrementalGC {
         let end_index = (start_index + step_size).min(self.objects.len());
 
         let mut new_objects = Vec::new();
-        
+
         // 保留未处理的对象
         for i in 0..start_index {
             new_objects.push(self.objects[i].clone());
@@ -132,7 +145,8 @@ impl IncrementalGC {
             let obj_ptr = object.as_ref() as *const RubyValue;
             if self.marked.contains(&obj_ptr) {
                 new_objects.push(object.clone());
-            } else {
+            }
+            else {
                 // 对象被回收
                 self.memory_used -= 1;
             }
@@ -149,7 +163,7 @@ impl IncrementalGC {
     }
 
     /// 执行一次增量垃圾收集步骤
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     /// - `step_size`：步骤大小
@@ -161,7 +175,7 @@ impl IncrementalGC {
                     println!("[GC] Starting incremental garbage collection...");
                     println!("[GC] Objects before: {}", self.objects.len());
                 }
-                
+
                 // 重置状态
                 self.marked.clear();
                 self.mark_index = 0;
@@ -201,7 +215,7 @@ impl IncrementalGC {
     }
 
     /// 执行全量垃圾收集
-    /// 
+    ///
     /// # 参数
     /// - `roots`：根对象列表
     pub fn collect(&mut self, roots: &[&RubyValue]) {
@@ -209,7 +223,7 @@ impl IncrementalGC {
         while self.state != IncrementalGCState::Idle {
             self.collect_step(roots, self.objects.len());
         }
-        
+
         // 开始新的垃圾收集
         self.collect_step(roots, self.objects.len());
         while self.state != IncrementalGCState::Idle {
@@ -218,7 +232,7 @@ impl IncrementalGC {
     }
 
     /// 获取当前内存使用量
-    /// 
+    ///
     /// # 返回值
     /// - `usize`：当前内存使用量
     pub fn memory_used(&self) -> usize {
@@ -226,7 +240,7 @@ impl IncrementalGC {
     }
 
     /// 设置内存阈值
-    /// 
+    ///
     /// # 参数
     /// - `threshold`：新的内存阈值
     pub fn set_threshold(&mut self, threshold: usize) {
@@ -234,7 +248,7 @@ impl IncrementalGC {
     }
 
     /// 启用日志
-    /// 
+    ///
     /// # 参数
     /// - `enable`：是否启用日志
     pub fn set_logging(&mut self, enable: bool) {
@@ -242,7 +256,7 @@ impl IncrementalGC {
     }
 
     /// 获取当前状态
-    /// 
+    ///
     /// # 返回值
     /// - `IncrementalGCState`：当前垃圾收集器状态
     pub fn state(&self) -> IncrementalGCState {
